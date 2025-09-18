@@ -1,0 +1,24 @@
+student : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1ODEyMzI0NiwianRpIjoiMGNkOTMzMmYtNGYyNS00NjJlLWFlNTctZjEzZTQ4ZGZhNDBiIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IlMxMDEiLCJuYmYiOjE3NTgxMjMyNDYsImV4cCI6MTc1ODIwOTY0NiwidXNlcl90eXBlIjoic3R1ZGVudCIsIm5hbWUiOiJKb2huIERvZSIsInJvb20iOiJSNDAxIn0.t9CSsyRJHFB84ZlzGKTzxdjB6I5LJRzbGAy2ksyR_44
+warden : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1ODEyNzE4NywianRpIjoiNDc2NTgzOWItMjY5YS00YTdhLTk2NzktMGM4ODMzZmQ4MjFkIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IlcwMDEiLCJuYmYiOjE3NTgxMjcxODcsImV4cCI6MTc1ODIxMzU4NywidXNlcl90eXBlIjoid2FyZGVuIiwibmFtZSI6IkRyLiBTYXJhaCBXaWxzb24iLCJyb29tIjpudWxsfQ.SywFc1PpFCKYMi70BafKPPi5ZS5HRPNT9rorz1E8svo
+security : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1ODEyNzMzNCwianRpIjoiZDRlOThiY2YtYTg4Ni00ZDUzLWJlMDgtZDdiZjNlMTVlNzliIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IlNFQzAwMSIsIm5iZiI6MTc1ODEyNzMzNCwiZXhwIjoxNzU4MjEzNzM0LCJ1c2VyX3R5cGUiOiJzZWN1cml0eSIsIm5hbWUiOiJNaWtlIEpvaG5zb24iLCJyb29tIjpudWxsfQ.7Iphvy__c1gq1Ms_1Nv64AcPrqE4RyGa0OZO7uwmeoY
+
+
+
+{
+  "id": "S101",
+  "password": "password123",
+  "userType": "student"
+}
+
+{
+  "id": "W001",
+  "password": "warden123",
+  "userType": "warden"
+}
+
+
+{
+  "id": "SEC001",
+  "password": "security123",
+  "userType": "security"
+}
