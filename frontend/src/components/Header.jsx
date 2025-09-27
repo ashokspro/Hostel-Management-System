@@ -302,7 +302,7 @@ const Header = ({ currentUser, userType, notifications = [], onLogout, onShowPro
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .hover-bg-light:hover {
           background-color: #f8f9fa !important;
           cursor: pointer;

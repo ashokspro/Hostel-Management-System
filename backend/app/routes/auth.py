@@ -12,6 +12,8 @@ from app import db
 from app.models.user import User
 import re
 
+import datetime
+
 # Create blueprint for authentication routes
 auth_bp = Blueprint('auth', __name__)
 
