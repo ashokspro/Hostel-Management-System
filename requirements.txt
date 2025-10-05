@@ -9,3 +9,4 @@ python-dotenv==1.0.0
 Werkzeug==2.3.7
 qrcode[pil]==7.4.2
 fpdf2==2.7.6
+pytz==2025.2
