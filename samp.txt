@@ -1,0 +1,2082 @@
+
+@gatepass_bp.route('/create', methods=['POST'])
+@jwt_required()
+def create_gatepass():
+    """
+    Create new gate pass request (Student only)
+    
+    Expected JSON:
+    {
+        "reason": "Medical appointment",
+        "fromDate": "2025-09-20",
+        "outTime": "09:00",
+        "returnTime": "18:00"
+    }
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        current_user = User.find_by_id(current_user_id)
+        
+        # Only students can create gate passes
+        if not current_user or current_user.user_type != 'student':
+            return jsonify({'message': 'Only students can create gate passes'}), 403
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
+        
+        required_fields = ['reason', 'fromDate', 'outTime', 'returnTime','returnDate','goingPlace']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'message': f'{field} is required'}), 400
+        try:
+            from_date = datetime.strptime(data['fromDate'], '%Y-%m-%d').date()
+            return_date = datetime.strptime(data['returnDate'], '%Y-%m-%d').date()
+            
+            # Parse out_time
+            try:
+                out_time = datetime.strptime(data['outTime'].strip().upper(), '%I:%M %p').time()
+            except ValueError:
+                out_time = datetime.strptime(data['outTime'].strip(), '%H:%M').time()
+            
+            # Parse return_time
+            try:
+                return_time = datetime.strptime(data['returnTime'].strip().upper(), '%I:%M %p').time()
+            except ValueError:
+                return_time = datetime.strptime(data['returnTime'].strip(), '%H:%M').time()
+
+        except ValueError:
+            return jsonify({'message': 'Invalid date or time format'}), 400
+
+
+        """# Parse and validate dates/times
+        try:
+            # Dates from input type="date" are always YYYY-MM-DD
+            from_date = datetime.strptime(data['fromDate'], '%Y-%m-%d').date()
+            return_date = datetime.strptime(data['returnDate'], '%Y-%m-%d').date()
+
+            # Times from input type="time" are always HH:MM (24-hour)
+            # Convert to 12-hour AM/PM string if needed for display
+            out_time = datetime.strptime(data['outTime'], '%H:%M').time()
+            return_time = datetime.strptime(data['returnTime'], '%H:%M').time()
+
+        except ValueError:
+            return jsonify({'message': 'Invalid date or time format'}), 400
+                
+        """
+
+        # Validate required fields
+        """required_fields = ['reason', 'fromDate', 'outTime', 'returnTime','returnDate','goingPlace']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'message': f'{field} is required'}), 400
+        # Parse and validate dates/times
+        try:
+            from_date = datetime.strptime(data['fromDate'], '%Y-%m-%d').date()
+            
+            # Try parsing outTime in 12-hour AM/PM first, then 24-hour
+            try:
+                out_time = datetime.strptime(data['outTime'].strip().upper(), '%I:%M %p').time()
+            except ValueError:
+                out_time = datetime.strptime(data['outTime'].strip(), '%H:%M').time()
+            
+            return_date = datetime.strptime(data['returnDate'], '%Y-%m-%d').date()
+            
+            # Try parsing returnTime in 12-hour AM/PM first, then 24-hour
+            try:
+                return_time = datetime.strptime(data['returnTime'].strip().upper(), '%I:%M %p').time()
+            except ValueError:
+                return_time = datetime.strptime(data['returnTime'].strip(), '%H:%M').time()
+
+        except ValueError:
+            return jsonify({'message': 'Invalid date or time format'}), 400
+        """
+        """try:
+            from_date = datetime.strptime(data['fromDate'], '%Y-%m-%d').date()
+            out_time = datetime.strptime(data['outTime'].strip().upper(), '%I:%M %p').time()
+            ###
+            return_date = datetime.strptime(data['returnDate'], '%Y-%m-%d').date() 
+            return_time = datetime.strptime(data['returnTime'].strip().upper(), '%I:%M %p').time()
+        except ValueError:
+            return jsonify({'message': 'Invalid date or time format'}), 400"""
+        """try:
+            from_date = datetime.strptime(data['fromDate'].strip(), '%Y-%m-%d').date()
+            out_time = datetime.strptime(data['outTime'].strip(), '%I:%M %p').time()
+            return_date = datetime.strptime(data['returnDate'].strip(), '%Y-%m-%d').date()
+            return_time = datetime.strptime(data['returnTime'].strip(), '%I:%M %p').time()
+        except ValueError as e:
+            print("Parsing error:", e)  # Debugging
+            return jsonify({'message': 'Invalid date or time format. Use hh:mm AM/PM'}), 400"""
+
+
+        # Validate date is not in the past
+        if from_date < date.today():
+            return jsonify({'message': 'Gate pass date cannot be in the past'}), 400
+        
+        # Validate time logic
+        ###
+        start_dt = datetime.combine(from_date, out_time)
+        end_dt = datetime.combine(return_date, return_time)
+
+# Validation
+        if end_dt <= start_dt:
+            return jsonify({'message': 'Return date/time must be after out date/time'}), 400
+        """if out_time >= return_time:
+            return jsonify({'message': 'Return time must be after out time'}), 400"""
+        
+        # Check if student has any pending gate passes
+        pending_passes = GatePass.query.filter_by(
+            student_id=current_user.id,
+            status='Pending'
+        ).count()
+        
+        if pending_passes > 0:
+            return jsonify({'message': 'You already have a pending gate pass request'}), 400
+        
+        # Check if student is currently out
+        currently_out = GatePass.query.filter_by(
+            student_id=current_user.id,
+            status='Approved',
+            exit_status='Out'
+        ).first()
+        
+        if currently_out:
+            return jsonify({'message': 'You are currently out. Please return before creating a new gate pass'}), 400
+        ###
+        # Create new gate pass
+        gate_pass = GatePass(
+            student_id=current_user.id,
+            reason=data['reason'].strip(),
+            going_place=data['goingPlace'].strip(),
+            from_date=from_date,
+            out_time=out_time,
+            return_date=return_date,
+            return_time=return_time
+        )
+        
+        db.session.add(gate_pass)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Gate pass request created successfully',
+            'gatePass': gate_pass.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Failed to create gate pass: {str(e)}'}), 500
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card-header {
+            font-weight: bold;
+        }
+        .stats-card {
+            transition: transform 0.2s;
+        }
+        .stats-card:hover {
+            transform: scale(1.03);
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-4">
+        <h2 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>Student Dashboard</h2>
+        
+        <!-- User Info -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-user me-2"></i>User Info
+            </div>
+            <div class="card-body" id="userInfo">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Gate Pass Stats -->
+        <div class="row mb-4" id="statsCards">
+            <!-- Filled by JS -->
+        </div>
+
+        <!-- Recent Gate Passes -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-list me-2"></i>Recent Gate Passes
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="recentPassesTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Reason</th>
+                                <th>Going Place</th>
+                                <th>Out Date/Time</th>
+                                <th>Return Date/Time</th>
+                                <th>Status</th>
+                                <th>Exit Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS + Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const token = localStorage.getItem('token'); // assuming JWT stored here
+                const response = await fetch('http://localhost:5000/api/user/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert(data.message || 'Failed to load dashboard');
+                    return;
+                }
+
+                // User Info
+                const userDiv = document.getElementById('userInfo');
+                userDiv.innerHTML = `
+                    <p><strong>Name:</strong> ${data.user.name}</p>
+                    <p><strong>Email:</strong> ${data.user.email}</p>
+                    <p><strong>User Type:</strong> ${data.userType}</p>
+                `;
+
+                // Stats Cards
+                const statsDiv = document.getElementById('statsCards');
+                const stats = data.gatePassStats;
+                statsDiv.innerHTML = `
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card text-white bg-primary h-100">
+                            <div class="card-body">
+                                <h5>Total Passes</h5>
+                                <p class="fs-4">${stats.total}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card text-white bg-success h-100">
+                            <div class="card-body">
+                                <h5>Approved</h5>
+                                <p class="fs-4">${stats.approved}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card text-white bg-warning h-100">
+                            <div class="card-body">
+                                <h5>Pending</h5>
+                                <p class="fs-4">${stats.pending}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card text-white bg-danger h-100">
+                            <div class="card-body">
+                                <h5>Rejected</h5>
+                                <p class="fs-4">${stats.rejected}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <div class="alert alert-info">
+                            Currently Out: ${stats.currentlyOut ? 'Yes' : 'No'}
+                        </div>
+                    </div>
+                `;
+
+                // Recent Gate Passes Table
+                const tbody = document.querySelector('#recentPassesTable tbody');
+                tbody.innerHTML = '';
+                data.recentPasses.forEach((gp, index) => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${gp.reason}</td>
+                            <td>${gp.going_place}</td>
+                            <td>${gp.from_date} ${gp.out_time}</td>
+                            <td>${gp.return_date} ${gp.return_time}</td>
+                            <td>${gp.status}</td>
+                            <td>${gp.exit_status}</td>
+                        </tr>
+                    `;
+                });
+
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+                alert('Failed to load dashboard');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+#student_dashboard.html
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Hostel Gate Pass System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 2rem 0;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-text {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .card-modern {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .table-modern {
+            margin: 0;
+        }
+
+        .table-modern thead {
+            background: #f8f9fa;
+        }
+
+        .table-modern th {
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-download:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+
+        .btn-download:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-logout {
+            background: white;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+
+        .alert-modern {
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="header-title">
+                        <i class="fas fa-user-graduate me-2"></i>Student Dashboard
+                    </h1>
+                    <p class="welcome-text mb-0">
+                        Welcome back, <span id="studentName">Student</span>
+                    </p>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Gate Pass Form -->
+            <div class="col-lg-5">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>Request Gate Pass
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="message"></div>
+                        
+                        <form id="gatepassForm">
+                            <div class="mb-3">
+                                <label for="reason" class="form-label fw-bold">
+                                    <i class="fas fa-comment-dots me-2 text-primary"></i>Reason
+                                </label>
+                                <textarea class="form-control" id="reason" name="reason" rows="3" 
+                                    placeholder="Enter reason for gate pass" required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="goingPlace" class="form-label fw-bold">
+                                    <i class="fas fa-comment-dots me-2 text-primary"></i>Destination
+                                </label>
+                                <textarea class="form-control" id="goingPlace" name="goingPlace" rows="3" 
+                                    placeholder="Enter the going Place" required></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fromDate" class="form-label fw-bold">
+                                        <i class="fas fa-calendar-alt me-2 text-primary"></i>From Date
+                                    </label>
+                                    <input type="date" class="form-control" id="fromDate" name="fromDate" required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="returnDate" class="form-label fw-bold">
+                                        <i class="fas fa-calendar-check me-2 text-success"></i>Return Date
+                                    </label>
+                                    <input type="date" class="form-control" id="returnDate" name="returnDate" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="outTime" class="form-label fw-bold">
+                                        <i class="fas fa-clock me-2 text-primary"></i>Out Time
+                                    </label>
+                                    <input type="time" class="form-control" id="outTime" name="outTime" required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="returnTime" class="form-label fw-bold">
+                                        <i class="fas fa-clock me-2 text-success"></i>Return Time
+                                    </label>
+                                    <input type="time" class="form-control" id="returnTime" name="returnTime" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary-custom w-100" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Request
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gate Pass History -->
+            <div class="col-lg-7">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>My Gate Passes
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Pass ID</th>
+                                        <th>Reason</th>
+                                        <th>Destination</th>
+                                        <th>From Date</th>
+                                        <th>Return Date</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gatepassTable">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="text-muted mt-2">Loading gate passes...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-custom"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        // Check authentication
+        if (!token) {
+            alert('Please login first!');
+            window.location.href = 'login.html';
+        }
+
+        // Set student name
+        document.getElementById('studentName').textContent = user.name || 'Student';
+
+        // Show toast notification
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const bgClass = {
+                'success': 'bg-success',
+                'error': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${title}:</strong> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        // Create gate pass
+        const form = document.getElementById('gatepassForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const originalContent = submitBtn.innerHTML;
+            
+            const data = {
+                reason: document.getElementById('reason').value,
+                goingPlace: document.getElementById('goingPlace').value,
+                fromDate: document.getElementById('fromDate').value,
+                returnDate: document.getElementById('returnDate').value,
+                outTime: document.getElementById('outTime').value,
+                returnTime: document.getElementById('returnTime').value
+            };
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="loading-spinner me-2"></span>Submitting...';
+                
+                const response = await fetch('http://localhost:5000/api/gatepass/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    form.reset();
+                    loadGatePasses();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to submit gate pass request', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        });
+
+        // Download PDF
+        async function downloadPDF(passId) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/gatepass/download/${passId}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showToast('Error', error.message || 'Failed to download PDF', 'error');
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `GatePass_${passId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                
+                showToast('Success', 'PDF downloaded successfully!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to download PDF', 'error');
+            }
+        }
+
+        // Load gate passes
+        async function loadGatePasses() {
+            try {
+                const response = await fetch('http://localhost:5000/api/gatepass/student', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                const result = await response.json();
+                const tbody = document.getElementById('gatepassTable');
+                
+                const passes = result.gatePasses || [];
+                
+                if (passes.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>No gate passes found</p>
+                                <small>Submit your first gate pass request using the form</small>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = passes.map(p => {
+                    const statusClass = {
+                        'Approved': 'status-approved',
+                        'Pending': 'status-pending',
+                        'Rejected': 'status-rejected'
+                    }[p.status] || 'status-pending';
+                    
+                    const statusIcon = {
+                        'Approved': 'fa-check-circle',
+                        'Pending': 'fa-clock',
+                        'Rejected': 'fa-times-circle'
+                    }[p.status] || 'fa-question-circle';
+                    
+                    const canDownload = p.status === 'Approved';
+                    
+                    return `
+                        <tr>
+                            <td><strong>${p.pass_id}</strong></td>
+                            <td>${p.reason}</td>
+                            <td>${p.going_place}</td>
+                            <td>${p.from_date}</td>
+                            <td>${p.return_date || 'N/A'}</td>
+                            <td>${p.out_time} - ${p.return_time}</td>
+                            <td>
+                                <span class="status-badge ${statusClass}">
+                                    <i class="fas ${statusIcon} me-1"></i>${p.status}
+                                </span>
+                            </td>
+                            <td>
+                                <button 
+                                    class="btn btn-download btn-sm" 
+                                    onclick="downloadPDF('${p.pass_id}')"
+                                    ${!canDownload ? 'disabled title="PDF available only for approved passes"' : ''}>
+                                    <i class="fas fa-download me-1"></i>PDF
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (err) {
+                console.error(err);
+                document.getElementById('gatepassTable').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Failed to load gate passes
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/home';
+            }
+        }
+
+        // Set minimum date to today
+        document.getElementById('fromDate').min = new Date().toISOString().split('T')[0];
+
+        // Load gate passes on page load
+        loadGatePasses();
+    </script>
+</body>
+</html>
+
+
+
+#security_dashboard.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard - Hostel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 2rem 0;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-modern {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-out {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-in {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .btn-mark-exit {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .btn-mark-return {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: white;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .table-modern {
+            margin: 0;
+        }
+
+        .table-modern thead {
+            background: #f8f9fa;
+        }
+
+        .table-modern th {
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6b7280;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            font-weight: 600;
+        }
+
+        .modal-modern .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="text-primary mb-1">
+                        <i class="fas fa-shield-alt me-2"></i>Security Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Welcome, <span id="securityName">Security Officer</span>
+                    </p>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
+                    <h3 id="totalApproved">0</h3>
+                    <small>Today's Passes</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <h3 id="currentlyOut">0</h3>
+                    <small>Currently Out</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h3 id="totalReturns">0</h3>
+                    <small>Returned Today</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+                    <h3 id="totalVisitors">0</h3>
+                    <small>Active Visitors</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#gatepassTab">
+                    <i class="fas fa-id-card me-2"></i>Gate Pass Management
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#logsTab">
+                    <i class="fas fa-history me-2"></i>Activity Logs
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Gate Pass Management Tab -->
+            <div class="tab-pane fade show active" id="gatepassTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-door-open me-2"></i>Approved Gate Passes
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Room</th>
+                                        <th>Reason</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gatepassTable">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="text-muted mt-2">Loading gate passes...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Activity Logs Tab -->
+            <div class="tab-pane fade" id="logsTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Today's Activity Log
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Type</th>
+                                        <th>Name/ID</th>
+                                        <th>Action</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logsTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            No activity logs for today
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-custom"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        // Check authentication
+        if (!token) {
+            alert('Please login first!');
+            window.location.href = '/home';
+        }
+
+        document.getElementById('securityName').textContent = user.name || 'Security Officer';
+
+        // Toast notification
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const bgClass = {
+                'success': 'bg-success',
+                'error': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body"><strong>${title}:</strong> ${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        // Load gate passes
+        async function loadGatePasses() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/approved`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const result = await response.json();
+                const tbody = document.getElementById('gatepassTable');
+                const passes = result.approvedPasses || [];
+                
+                if (passes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No approved gate passes for today</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = passes.map(gp => `
+                    <tr>
+                        <td>${gp.student_name}<br><small class="text-muted">${gp.student_id}</small></td>
+                        <td>${gp.room_no}</td>
+                        <td>${gp.reason}</td>
+                        <td>${gp.out_time} - ${gp.return_time}</td>
+                        <td><span class="status-${gp.exit_status.toLowerCase()}">${gp.exit_status}</span></td>
+                        <td>
+                            ${gp.exit_status === 'In' ? `
+                                <button class="btn btn-mark-exit btn-sm" onclick="markExit('${gp.pass_id}')">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Mark Exit
+                                </button>
+                            ` : `
+                                <button class="btn btn-mark-return btn-sm" onclick="markReturn('${gp.pass_id}')">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Mark Return
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
+                
+                updateStatistics(passes);
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to load gate passes', 'error');
+            }
+        }
+
+        // Mark exit
+        async function markExit(passId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/mark-exit/${passId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ remarks: 'Exited via main gate' })
+                });
+                
+                if (response.ok) {
+                    showToast('Success', 'Student marked as exited', 'success');
+                    logActivity('Student', passId, 'Exit', 'Marked exit via main gate');
+                    loadGatePasses();
+                } else {
+                    const error = await response.json();
+                    showToast('Error', error.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to mark exit', 'error');
+            }
+        }
+
+        // Mark return
+        async function markReturn(passId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/mark-return/${passId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ remarks: 'Returned via main gate' })
+                });
+                
+                if (response.ok) {
+                    showToast('Success', 'Student marked as returned', 'success');
+                    logActivity('Student', passId, 'Return', 'Marked return via main gate');
+                    loadGatePasses();
+                } else {
+                    const error = await response.json();
+                    showToast('Error', error.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to mark return', 'error');
+            }
+        }
+
+        // Update statistics
+        function updateStatistics(passes) {
+            document.getElementById('totalApproved').textContent = passes.length;
+            document.getElementById('currentlyOut').textContent = passes.filter(gp => gp.exit_status === 'Out').length;
+            document.getElementById('totalReturns').textContent = passes.filter(gp => gp.actual_return_time).length;
+        }
+
+
+        // Activity logs
+        const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+
+        function logActivity(type, nameId, action, remarks) {
+            const log = {
+                time: new Date().toLocaleString(),
+                type: type,
+                nameId: nameId,
+                action: action,
+                remarks: remarks
+            };
+            logs.unshift(log);
+            if (logs.length > 100) logs.pop();
+            localStorage.setItem('activityLogs', JSON.stringify(logs));
+            loadLogs();
+        }
+
+        function loadLogs() {
+            const tbody = document.getElementById('logsTable');
+            const todayLogs = logs.filter(log => {
+                const logDate = new Date(log.time).toDateString();
+                return logDate === new Date().toDateString();
+            });
+            
+            if (todayLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No activity logs for today</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = todayLogs.map(log => `
+                <tr>
+                    <td>${log.time}</td>
+                    <td><span class="badge bg-primary">${log.type}</span></td>
+                    <td>${log.nameId}</td>
+                    <td><strong>${log.action}</strong></td>
+                    <td>${log.remarks}</td>
+                </tr>
+            `).join('');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/home';
+            }
+        }
+
+        // Initialize
+        loadGatePasses();
+        loadLogs();
+        
+        // Refresh gate passes every 30 seconds
+        setInterval(loadGatePasses, 30000);
+    </script>
+</body>
+</html>
+
+
+
+#approved 
+
+@gatepass_bp.route('/approved', methods=['GET'])
+@jwt_required()
+def get_approved_gatepasses():
+    """
+    Get all approved gate passes (Security and Warden access)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        current_user = User.find_by_id(current_user_id)
+        
+        if not current_user or current_user.user_type not in ['security', 'warden']:
+            return jsonify({'message': 'Access denied'}), 403
+        
+        # Get approved gate passes
+        approved_passes = GatePass.get_approved_passes()
+        
+        return jsonify({
+            'approvedPasses': [gp.to_dict() for gp in approved_passes]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': f'Failed to get approved gate passes: {str(e)}'}), 500
+
+
+
+
+#warden_dashboard.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warden Dashboard</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+
+
+    <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h2 { color: #333; }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex: 1;
+      text-align: center;
+    }
+    .card h3 {
+      margin-bottom: 10px;
+      color: #555;
+    }
+    .card p {
+      font-size: 24px;
+      font-weight: bold;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <h2>Welcome, <span id="wardenName"></span> (Warden)</h2>
+
+  <div class="stats">
+    <div class="card">
+      <h3>Pending Requests</h3>
+      <p id="pendingRequests">0</p>
+    </div>
+    <div class="card">
+      <h3>Today's Approved</h3>
+      <p id="todayApproved">0</p>
+    </div>
+    <div class="card">
+      <h3>Currently Out</h3>
+      <p id="currentlyOut">0</p>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first!");
+      window.location.href = "/home";
+    }
+
+    async function loadWardenDashboard() {
+      try {
+        const res = await fetch("http://localhost:5000/api/user/dashboard", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        const result = await res.json();
+        if (!res.ok) {
+          alert(result.message || "Failed to load dashboard");
+          return;
+        }
+
+        // Set Warden name
+        document.getElementById("wardenName").innerText = result.user.name;
+
+        // Fill in stats
+        if (result.wardenStats) {
+          document.getElementById("pendingRequests").innerText = result.wardenStats.pendingRequests;
+          document.getElementById("todayApproved").innerText = result.wardenStats.todayApproved;
+          document.getElementById("currentlyOut").innerText = result.wardenStats.currentlyOut;
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error loading dashboard");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadWardenDashboard);
+  </script>
+
+<!-- Add New Student Form -->
+<h3>Add New Student</h3>
+<form id="addStudentForm">
+    <label>ID:</label><br>
+    <input type="text" id="studentId" required><br>
+
+    <label>Name:</label><br>
+    <input type="text" id="studentName" required><br>
+
+    <label>Password:</label><br>
+    <input type="password" id="password" required><br>
+
+    <label>Email:</label><br>
+    <input type="email" id="email" required><br>
+
+    <label>Phone:</label><br>
+    <input type="text" id="phone" required><br>
+
+    <label>Room:</label><br>
+    <input type="text" id="room" required><br>
+
+    <label>Course:</label><br>
+    <input type="text" id="course" required><br>
+
+    <label>Year:</label><br>
+    <select id="year" required>
+        <option value="1st Year">1st Year</option>
+        <option value="2nd Year">2nd Year</option>
+        <option value="3rd Year">3rd Year</option>
+        <option value="4th Year">4th Year</option>
+    </select><br>
+
+    <label>Guardian Name:</label><br>
+    <input type="text" id="guardianName"><br>
+
+    <label>Guardian Phone:</label><br>
+    <input type="text" id="guardianPhone"><br><br>
+
+    <button type="submit">Add Student</button>
+</form>
+
+<p id="studentMessage"></p>
+
+<script>
+document.getElementById("addStudentForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    // Collect form data
+    const studentData = {
+        id: document.getElementById("studentId").value.trim(),
+        name: document.getElementById("studentName").value.trim(),
+        password: document.getElementById("password").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        room: document.getElementById("room").value.trim(),
+        course: document.getElementById("course").value.trim(),
+        year: document.getElementById("year").value,
+        guardianName: document.getElementById("guardianName").value.trim(),
+        guardianPhone: document.getElementById("guardianPhone").value.trim()
+    };
+
+    try {
+        // Send request to backend
+        const response = await fetch("http://localhost:5000/api/admin/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token") // JWT stored at login
+            },
+            body: JSON.stringify(studentData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            document.getElementById("studentMessage").style.color = "green";
+            document.getElementById("studentMessage").innerText = "✅ " + result.message;
+            document.getElementById("addStudentForm").reset(); // Clear form after success
+        } else {
+            document.getElementById("studentMessage").style.color = "red";
+            document.getElementById("studentMessage").innerText = "❌ " + (result.message || "Failed to add student");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("studentMessage").style.color = "red";
+        document.getElementById("studentMessage").innerText = "⚠️ Error connecting to server.";
+    }
+});
+</script>
+
+<!-- Student List -->
+<h3>All Students</h3>
+<input type="text" id="search" placeholder="Search by name, ID, or room">
+<button onclick="loadStudents()">Search</button>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Room</th>
+            <th>Course</th>
+            <th>Year</th>
+            <th>Guardian</th>
+            <th>Guardian Phone</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="studentsTable"></tbody>
+</table>
+
+<!-- Edit Form (hidden by default) -->
+<div id="editForm" style="display:none; border:1px solid #ccc; padding:15px; margin-top:20px;">
+    <h3>Edit Student</h3>
+    <form id="updateStudentForm">
+        <input type="hidden" id="editId">
+        <label>Name: <input type="text" id="editName"></label><br>
+        <label>Email: <input type="text" id="editEmail"></label><br>
+        <label>Phone: <input type="text" id="editPhone"></label><br>
+        <label>Room: <input type="text" id="editRoom"></label><br>
+        <label>Course: <input type="text" id="editCourse"></label><br>
+        <label>Year: 
+            <select id="editYear">
+                <option value="">Select</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+            </select>
+        </label><br>
+        <label>Guardian: <input type="text" id="editGuardian"></label><br>
+        <label>Guardian Phone: <input type="text" id="editGuardianPhone"></label><br>
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="cancelEdit()">Cancel</button>
+    </form>
+</div>
+
+<script>
+    if (!token) {
+        alert('Please login first!');
+        window.location.href = '/home';
+    }
+
+    async function loadStudents() {
+    const search = document.getElementById('search').value;
+    try {
+        const response = await fetch(`http://localhost:5000/api/admin/students?search=${search}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const result = await response.json();
+        const tbody = document.getElementById('studentsTable');
+        tbody.innerHTML = '';
+
+        if (result.students) {
+            // Sort so that active students appear first
+            result.students.sort((a, b) => {
+                if (a.is_active === b.is_active) return 0;
+                return a.is_active ? -1 : 1; // Active first
+            });
+
+            result.students.forEach(s => {
+                const row = `<tr style="background-color:${s.is_active ? '#fff' : '#f8d7da'}">
+                    <td>${s.id}</td>
+                    <td>${s.name}</td>
+                    <td>${s.email}</td>
+                    <td>${s.phone}</td>
+                    <td>${s.room}</td>
+                    <td>${s.course}</td>
+                    <td>${s.year}</td>
+                    <td>${s.guardian_name || ''}</td>
+                    <td>${s.guardian_phone || ''}</td>
+                    <td>${s.is_active ? '✅ Active' : '❌ Inactive'}</td>
+                    <td>
+                        <button onclick="editStudent(${JSON.stringify(s).replace(/"/g, '&quot;')})">Edit</button>
+                        <button onclick="deleteStudent('${s.id}')">Delete</button>
+                        ${s.is_active 
+                            ? `<button onclick="deactivateStudent('${s.id}')">Deactivate</button>` 
+                            : `<button onclick="activateStudent('${s.id}')">Activate</button>`}
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+
+    function editStudent(student) {
+        document.getElementById('editForm').style.display = 'block';
+        document.getElementById('editId').value = student.id;
+        document.getElementById('editName').value = student.name;
+        document.getElementById('editEmail').value = student.email;
+        document.getElementById('editPhone').value = student.phone;
+        document.getElementById('editRoom').value = student.room;
+        document.getElementById('editCourse').value = student.course;
+        document.getElementById('editYear').value = student.year;
+        document.getElementById('editGuardian').value = student.guardian_name;
+        document.getElementById('editGuardianPhone').value = student.guardian_phone;
+    }
+
+    function cancelEdit() {
+        document.getElementById('editForm').style.display = 'none';
+    }
+
+    document.getElementById('updateStudentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const data = {
+            name: document.getElementById('editName').value,
+            email: document.getElementById('editEmail').value,
+            phone: document.getElementById('editPhone').value,
+            room: document.getElementById('editRoom').value,
+            course: document.getElementById('editCourse').value,
+            year: document.getElementById('editYear').value,
+            guardian_name: document.getElementById('editGuardian').value,
+            guardian_phone: document.getElementById('editGuardianPhone').value,
+        };
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/students/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            alert(result.message);
+            cancelEdit();
+            loadStudents();
+        } catch (err) {
+            console.log(err);
+        }
+    });
+
+    async function deleteStudent(id) {
+        if (!confirm("Are you sure you want to delete this student?")) return;
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/students/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const result = await response.json();
+            alert(result.message);
+            loadStudents();
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    async function deactivateStudent(id) {
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/students/${id}/deactivate`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const result = await response.json();
+            alert(result.message);
+            loadStudents();
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    async function activateStudent(id) {
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/students/${id}/activate`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const result = await response.json();
+            alert(result.message);
+            loadStudents();
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    // Load students on page load
+    loadStudents();
+</script>
+
+<h3>Gate Pass Requests</h3>
+<input type="text" id="gpSearch" placeholder="Search by student name, ID, or room">
+<button onclick="loadGatePasses()">Search</button>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Pass ID</th>
+            <th>Student ID</th>
+            <th>Student Name</th>
+            <th>Room</th>
+            <th>Reason</th>
+            <th>Destination</th>
+            <th>Student Mobile Number</th>
+            <th>Guardian Mobile Number</th>
+            <th>Out Date</th>
+            <th>Out Time</th>
+            <th>Return Date</th>
+            <th>Return Time</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="gatePassTable"></tbody>
+</table>
+
+<script>
+if (!token) {
+    alert('Please login first!');
+    window.location.href = '/home';
+}
+
+// Load all gate passes
+async function loadGatePasses() {
+    const search = document.getElementById('gpSearch').value;
+    try {
+        const res = await fetch(`http://localhost:5000/api/gatepass/pending`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const result = await res.json();
+        const tbody = document.getElementById('gatePassTable');
+        tbody.innerHTML = '';
+
+        if (result.pendingRequests) { // <-- use the correct key
+            result.pendingRequests.forEach(gp => {
+                const row = `<tr>
+                    <td>${gp.pass_id}</td>
+                    <td>${gp.student_id}</td>
+                    <td>${gp.student_name}</td>
+                    <td>${gp.room_no}</td>
+                    <td>${gp.reason}</td>
+                    <td>${gp.going_place}</td>
+                    <td>${gp.phone}</td>
+                    <td>${gp.guardian_phone || '-'}</td>
+                    <td>${gp.from_date}</td>
+                    <td>${gp.out_time}</td>
+                    <td>${gp.return_date}</td>
+                    <td>${gp.return_time}</td>
+                    <td>
+                        ${gp.status === 'Pending' 
+                            ? `<button onclick="approveGatePass('${gp.pass_id}')">Approve</button>
+                               <button onclick="rejectGatePass('${gp.pass_id}')">Reject</button>` 
+                            : ''}
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+
+// Approve gate pass
+async function approveGatePass(pass_id) {
+    const remarks = prompt("Enter approval remarks (optional):");
+    if (remarks === null) return; // user canceled prompt
+    try {
+        const res = await fetch(`http://localhost:5000/api/gatepass/approve/${pass_id}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ remarks })
+        });
+        const result = await res.json();
+        if (res.ok) {
+            alert(result.message);
+            loadGatePasses();
+        } else {
+            alert(result.message || "Failed to approve gate pass");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Failed to approve gate pass due to network error");
+    }
+}
+
+
+// Reject gate pass
+async function rejectGatePass(pass_id) {
+    const remarks = prompt("Enter rejection remarks (optional):");
+    try {
+        const res = await fetch(`http://localhost:5000/api/gatepass/reject/${pass_id}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ remarks })
+        });
+        const result = await res.json();
+        alert(result.message);
+        loadGatePasses();
+    } catch (err) {
+        console.log(err);
+        alert("Failed to reject gate pass");
+    }
+}
+
+// Load on page load
+loadGatePasses();
+
+
+
+</script>
+
+
+</body>
+</html>
+
+
+
+#login.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hostel Management - Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        input, select {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px;
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover { background-color: #45a049; }
+        .message { color: red; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Login</h2>
+        <div id="message" class="message"></div>
+
+        <label for="id">User ID:</label>
+        <input type="text" id="id" placeholder="Enter your ID">
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter your password">
+
+        <label for="userType">User Type:</label>
+        <select id="userType">
+            <option value="student">Student</option>
+            <option value="warden">Warden</option>
+            <option value="security">Security</option>
+        </select>
+
+        <button onclick="login()">Login</button>
+    </div>
+
+   <script>
+async function login() {
+    const userId = document.getElementById('id').value.trim();
+    const password = document.getElementById('password').value;
+    const userType = document.getElementById('userType').value;
+
+    if (!userId || !password) {
+        document.getElementById('message').innerText = "Please enter ID and password";
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: userId, password: password, userType: userType })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem('token', data.token);
+
+            // Redirect to text verification pages
+            if (data.userType === 'student') {
+                window.location.href = '/student/page';
+            } else if (data.userType === 'warden') {
+                window.location.href = '/warden/page';
+            } else {
+                window.location.href = '/security/page';
+            }
+        } else {
+            document.getElementById('message').innerText = data.message;
+        }
+
+    } catch (err) {
+        document.getElementById('message').innerText = "Login failed. Try again.";
+        console.error(err);
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warden Dashboard - Hostel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 2rem 0;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-modern {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-logout {
+            background: white;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .btn-approve:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .btn-reject:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #f9fafb;
+            width: 100%;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+            background: white;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .student-id {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .room-badge {
+            background: #dbeafe;
+            color: var(--primary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .table-modern {
+            margin: 0;
+        }
+
+        .table-modern thead {
+            background: #f8f9fa;
+        }
+
+        .table-modern th {
+            border: none;
+            padding: 0.875rem 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 0.875rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.85rem;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .form-modern input, .form-modern select {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+
+        .form-modern input:focus, .form-modern select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+            background: white;
+            outline: none;
+        }
+
+        .form-modern label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .form-modern label i {
+            color: var(--primary);
+            margin-right: 0.5rem;
+            width: 16px;
+            display: inline-block;
+        }
+
+        .form-section {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border: 2px solid #e5e7eb;
+        }
+
+        .form-section-title {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .btn-primary-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            border: none;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
+        }
+
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+
+        .btn-deactivate {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .toast-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6b7280;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal Styles */
+        .modal-modern .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-modern .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .modal-modern .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-modern .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-modern .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-modern .modal-footer {
+            border: none;
+            padding: 1rem 2rem 2rem;
+        }
+
+        .modal-modern textarea {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+
+        .modal-modern textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+            background: white;
+            outline: none;
+        }
+
+        /* Logout Modal */
+        .modal-logout .modal-header {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .confirmation-text {
+            font-size: 1.1rem;
+            color: #374151;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        /* Delete Confirmation Modal */
+        .modal-delete .modal-header {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .student-info-text {
+            background: #fee2e2;
+            border: 2px solid #fca5a5;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .student-info-text .student-highlight {
+            font-weight: 700;
+            color: var(--danger);
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="text-primary mb-1">
+                        <i class="fas fa-user-shield me-2"></i>Warden Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Welcome, <span id="wardenName">Warden</span>
+                    </p>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <h3 id="pendingRequests">0</h3>
+                    <small>Pending Requests</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h3 id="todayApproved">0</h3>
+                    <small>Today's Approved</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
+                    <h3 id="currentlyOut">0</h3>
+                    <small>Currently Out</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#gatepassTab">
+                    <i class="fas fa-id-card me-2"></i>Gate Pass Requests
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#studentsTab">
+                    <i class="fas fa-users me-2"></i>Student Management
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#addStudentTab">
+                    <i class="fas fa-user-plus me-2"></i>Add Student
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Gate Pass Requests Tab -->
+            <div class="tab-pane fade show active" id="gatepassTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>Pending Gate Pass Requests
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="search-container">
+                            <i class="fas fa-search search-icon"></i>
+                            <input 
+                                type="text" 
+                                id="gpSearch" 
+                                class="search-box" 
+                                placeholder="Search by student name, ID, room, or destination..."
+                            >
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-user me-2"></i>Student</th>
+                                        <th><i class="fas fa-door-open me-2"></i>Room</th>
+                                        <th><i class="fas fa-comment me-2"></i>Reason</th>
+                                        <th><i class="fas fa-map-marker-alt me-2"></i>Destination</th>
+                                        <th><i class="fas fa-phone me-2"></i>Contact</th>
+                                        <th><i class="fas fa-user-shield me-2"></i>Guardian</th>
+                                        <th><i class="fas fa-clock me-2"></i>Out Date/Time</th>
+                                        <th><i class="fas fa-calendar-check me-2"></i>Return Date/Time</th>
+                                        <th><i class="fas fa-cog me-2"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gatePassTable">
+                                    <tr>
+                                        <td colspan="9" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="text-muted mt-2">Loading gate passes...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Management Tab -->
+            <div class="tab-pane fade" id="studentsTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2"></i>All Students
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="search-container">
+                            <i class="fas fa-search search-icon"></i>
+                            <input 
+                                type="text" 
+                                id="search" 
+                                class="search-box" 
+                                placeholder="Search by name, ID, room, or course..."
+                            >
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-id-card me-2"></i>ID</th>
+                                        <th><i class="fas fa-user me-2"></i>Name</th>
+                                        <th><i class="fas fa-envelope me-2"></i>Email</th>
+                                        <th><i class="fas fa-phone me-2"></i>Phone</th>
+                                        <th><i class="fas fa-door-open me-2"></i>Room</th>
+                                        <th><i class="fas fa-book me-2"></i>Course</th>
+                                        <th><i class="fas fa-calendar me-2"></i>Year</th>
+                                        <th><i class="fas fa-user-shield me-2"></i>Guardian</th>
+                                        <th><i class="fas fa-toggle-on me-2"></i>Status</th>
+                                        <th><i class="fas fa-cog me-2"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTable">
+                                    <tr>
+                                        <td colspan="10" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="text-muted mt-2">Loading students...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Form -->
+                <div id="editForm" style="display:none;" class="mt-3">
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="mb-0">
+                                <i class="fas fa-edit me-2"></i>Edit Student Information
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <form id="updateStudentForm" class="form-modern">
+                                <input type="hidden" id="editId">
+                                
+                                <div class="form-section">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-user me-2"></i>Personal Information
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-user"></i>Full Name</label>
+                                            <input type="text" id="editName" class="form-control" placeholder="Enter student name">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-envelope"></i>Email Address</label>
+                                            <input type="email" id="editEmail" class="form-control" placeholder="student@example.com">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-phone"></i>Phone Number</label>
+                                            <input type="text" id="editPhone" class="form-control" placeholder="+91-9876543210">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-door-open"></i>Room Number</label>
+                                            <input type="text" id="editRoom" class="form-control" placeholder="R401">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-book"></i>Course</label>
+                                            <input type="text" id="editCourse" class="form-control" placeholder="Computer Science">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-calendar-alt"></i>Year</label>
+                                            <select id="editYear" class="form-control">
+                                                <option value="">Select Year</option>
+                                                <option value="1st Year">1st Year</option>
+                                                <option value="2nd Year">2nd Year</option>
+                                                <option value="3rd Year">3rd Year</option>
+                                                <option value="4th Year">4th Year</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-user-shield me-2"></i>Guardian Information
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-user-tie"></i>Guardian Name</label>
+                                            <input type="text" id="editGuardian" class="form-control" placeholder="Guardian's full name">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label><i class="fas fa-phone-alt"></i>Guardian Phone</label>
+                                            <input type="text" id="editGuardianPhone" class="form-control" placeholder="+91-9876543210">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary-modern">
+                                        <i class="fas fa-save me-2"></i>Save Changes
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Student Tab -->
+            <div class="tab-pane fade" id="addStudentTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-plus me-2"></i>Add New Student
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="addStudentForm" class="form-modern">
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="fas fa-id-badge me-2"></i>Account Information
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-id-card"></i>Student ID <span class="text-danger">*</span></label>
+                                        <input type="text" id="studentId" class="form-control" placeholder="e.g., S104" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-lock"></i>Password <span class="text-danger">*</span></label>
+                                        <input type="password" id="password" class="form-control" placeholder="Minimum 6 characters" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-user"></i>Full Name <span class="text-danger">*</span></label>
+                                        <input type="text" id="studentName" class="form-control" placeholder="Enter full name" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-envelope"></i>Email <span class="text-danger">*</span></label>
+                                        <input type="email" id="email" class="form-control" placeholder="student@hostel.edu" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-phone"></i>Phone <span class="text-danger">*</span></label>
+                                        <input type="text" id="phone" class="form-control" placeholder="+91-9876543210" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-door-open"></i>Room <span class="text-danger">*</span></label>
+                                        <input type="text" id="room" class="form-control" placeholder="e.g., R401" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-book"></i>Course <span class="text-danger">*</span></label>
+                                        <input type="text" id="course" class="form-control" placeholder="e.g., Computer Science" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-calendar-alt"></i>Year <span class="text-danger">*</span></label>
+                                        <select id="year" class="form-control" required>
+                                            <option value="">Select Year</option>
+                                            <option value="1st Year">1st Year</option>
+                                            <option value="2nd Year">2nd Year</option>
+                                            <option value="3rd Year">3rd Year</option>
+                                            <option value="4th Year">4th Year</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="fas fa-user-shield me-2"></i>Guardian Information
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-user-tie"></i>Guardian Name</label>
+                                        <input type="text" id="guardianName" class="form-control" placeholder="Guardian's full name">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label><i class="fas fa-phone-alt"></i>Guardian Phone</label>
+                                        <input type="text" id="guardianPhone" class="form-control" placeholder="+91-9876543210">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary-modern">
+                                <i class="fas fa-plus me-2"></i>Add Student
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-custom"></div>
+
+    <!-- Remarks Modal -->
+    <div class="modal fade modal-modern" id="remarksModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="remarksModalTitle">
+                        <i class="fas fa-comment-dots me-2"></i>Enter Remarks
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-bold mb-2">Remarks (Optional)</label>
+                    <textarea 
+                        id="remarksInput" 
+                        class="form-control" 
+                        rows="4" 
+                        placeholder="Enter your remarks here..."
+                    ></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary-modern" id="submitRemarksBtn">
+                        <i class="fas fa-check me-2"></i>Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade modal-modern modal-logout" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to logout?</p>
+                    <p class="text-center text-muted mb-0">
+                        <small>You will need to login again to access your dashboard</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmLogoutBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i>Yes, Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Student Confirmation Modal -->
+    <div class="modal fade modal-modern modal-delete" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-trash-alt me-2"></i>Confirm Delete Student
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to delete this student?</p>
+                    <div class="student-info-text">
+                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                        <span class="student-highlight" id="deleteStudentInfo"></span>
+                    </div>
+                    <p class="text-center text-danger mb-0">
+                        <small><strong>Warning:</strong> This action cannot be undone!</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash-alt me-2"></i>Yes, Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const token = localStorage.getItem('token');
+        let allGatePasses = [];
+
+        if (!token) {
+            alert('Please login first!');
+            window.location.href = '/home';
+        }
+
+        // Toast notification
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const bgClass = {
+                'success': 'bg-success',
+                'error': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body"><strong>${title}:</strong> ${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        // Load dashboard
+        async function loadWardenDashboard() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/dashboard`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await res.json();
+                
+                if (!res.ok) {
+                    showToast('Error', result.message || 'Failed to load dashboard', 'error');
+                    return;
+                }
+
+                document.getElementById('wardenName').innerText = result.user.name;
+
+                if (result.wardenStats) {
+                    document.getElementById('pendingRequests').innerText = result.wardenStats.pendingRequests;
+                    document.getElementById('todayApproved').innerText = result.wardenStats.todayApproved;
+                    document.getElementById('currentlyOut').innerText = result.wardenStats.currentlyOut;
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Error loading dashboard', 'error');
+            }
+        }
+
+        // Format date time to readable format
+        function formatDateTime(dateStr, timeStr) {
+            const date = new Date(dateStr + 'T' + timeStr);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            
+            return `${month} ${day}, ${hours}:${minutes} ${ampm}`;
+        }
+
+        // Render gate passes in table
+        function renderGatePasses(passes = allGatePasses) {
+            const tbody = document.getElementById('gatePassTable');
+            
+            if (passes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <i class="fas fa-clipboard-check"></i>
+                            <p>No pending gate pass requests</p>
+                            <small>New requests will appear here</small>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = passes.map(gp => `
+                <tr>
+                    <td>
+                        <div class="student-name">${gp.student_name}</div>
+                        <div class="student-id">${gp.student_id}</div>
+                    </td>
+                    <td><span class="room-badge">${gp.room_no}</span></td>
+                    <td>${gp.reason}</td>
+                    <td>${gp.going_place || 'N/A'}</td>
+                    <td><small>${gp.phone}</small></td>
+                    <td><small>${gp.guardian_phone || 'N/A'}</small></td>
+                    <td><small>${formatDateTime(gp.from_date, gp.out_time)}</small></td>
+                    <td><small>${formatDateTime(gp.return_date, gp.return_time)}</small></td>
+                    <td>
+                        <button class="btn btn-approve btn-sm w-100" onclick="approveGatePass('${gp.pass_id}')">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        <button class="btn btn-reject btn-sm w-100" onclick="rejectGatePass('${gp.pass_id}')">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load gate passes
+        async function loadGatePasses() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/gatepass/pending`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await res.json();
+                
+                allGatePasses = result.pendingRequests || [];
+                renderGatePasses();
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to load gate passes', 'error');
+            }
+        }
+
+        // Search gate passes
+        document.getElementById('gpSearch').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allGatePasses.filter(gp => 
+                gp.student_name.toLowerCase().includes(searchTerm) ||
+                gp.student_id.toLowerCase().includes(searchTerm) ||
+                gp.room_no.toLowerCase().includes(searchTerm) ||
+                (gp.going_place || '').toLowerCase().includes(searchTerm)
+            );
+            renderGatePasses(filtered);
+        });
+
+        // Approve gate pass
+        let currentAction = null;
+        let currentPassId = null;
+        const remarksModal = new bootstrap.Modal(document.getElementById('remarksModal'));
+
+        async function approveGatePass(pass_id) {
+            currentAction = 'approve';
+            currentPassId = pass_id;
+            document.getElementById('remarksModalTitle').innerHTML = '<i class="fas fa-check-circle me-2"></i>Approve Gate Pass';
+            document.getElementById('remarksInput').value = '';
+            document.getElementById('remarksInput').placeholder = 'Enter approval remarks (optional)...';
+            document.getElementById('submitRemarksBtn').innerHTML = '<i class="fas fa-check me-2"></i>Approve';
+            document.getElementById('submitRemarksBtn').className = 'btn btn-success';
+            remarksModal.show();
+        }
+
+        // Reject gate pass
+        async function rejectGatePass(pass_id) {
+            currentAction = 'reject';
+            currentPassId = pass_id;
+            document.getElementById('remarksModalTitle').innerHTML = '<i class="fas fa-times-circle me-2"></i>Reject Gate Pass';
+            document.getElementById('remarksInput').value = '';
+            document.getElementById('remarksInput').placeholder = 'Enter rejection reason (optional)...';
+            document.getElementById('submitRemarksBtn').innerHTML = '<i class="fas fa-times me-2"></i>Reject';
+            document.getElementById('submitRemarksBtn').className = 'btn btn-danger';
+            remarksModal.show();
+        }
+
+        // Handle remarks submission
+        document.getElementById('submitRemarksBtn').addEventListener('click', async () => {
+            const remarks = document.getElementById('remarksInput').value.trim();
+            const endpoint = currentAction === 'approve' ? 'approve' : 'reject';
+            
+            try {
+                const res = await fetch(`${API_BASE_URL}/gatepass/${endpoint}/${currentPassId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ remarks })
+                });
+                const result = await res.json();
+                
+                if (res.ok) {
+                    showToast('Success', result.message, 'success');
+                    remarksModal.hide();
+                    loadGatePasses();
+                    loadWardenDashboard();
+                } else {
+                    showToast('Error', result.message || `Failed to ${currentAction}`, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', `Failed to ${currentAction} gate pass`, 'error');
+            }
+        });
+
+        // Load students
+        async function loadStudents() {
+            const search = document.getElementById('search').value;
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/students?search=${search}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await response.json();
+                const tbody = document.getElementById('studentsTable');
+
+                if (!result.students || result.students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No students found</td></tr>';
+                    return;
+                }
+
+                result.students.sort((a, b) => a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1);
+
+                tbody.innerHTML = result.students.map(s => `
+                    <tr style="background-color:${s.is_active ? '#fff' : '#fee2e2'}">
+                        <td>${s.id}</td>
+                        <td>${s.name}</td>
+                        <td><small>${s.email}</small></td>
+                        <td><small>${s.phone}</small></td>
+                        <td>${s.room}</td>
+                        <td>${s.course}</td>
+                        <td>${s.year}</td>
+                        <td><small>${s.guardian_name || '-'}<br>${s.guardian_phone || '-'}</small></td>
+                        <td>
+                            <span class="badge-${s.is_active ? 'active' : 'inactive'}">
+                                ${s.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-edit btn-sm mb-1" onclick='editStudent(${JSON.stringify(s)})'>
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-delete btn-sm mb-1" onclick="deleteStudent('${s.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ${s.is_active 
+                                ? `<button class="btn btn-deactivate btn-sm" onclick="deactivateStudent('${s.id}')">Deactivate</button>` 
+                                : `<button class="btn btn-success btn-sm" onclick="activateStudent('${s.id}')">Activate</button>`}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to load students', 'error');
+            }
+        }
+
+        // Edit student
+        function editStudent(student) {
+            document.getElementById('editForm').style.display = 'block';
+            document.getElementById('editId').value = student.id;
+            document.getElementById('editName').value = student.name;
+            document.getElementById('editEmail').value = student.email;
+            document.getElementById('editPhone').value = student.phone;
+            document.getElementById('editRoom').value = student.room;
+            document.getElementById('editCourse').value = student.course;
+            document.getElementById('editYear').value = student.year;
+            document.getElementById('editGuardian').value = student.guardian_name || '';
+            document.getElementById('editGuardianPhone').value = student.guardian_phone || '';
+            window.scrollTo({ top: document.getElementById('editForm').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            document.getElementById('editForm').style.display = 'none';
+        }
+
+        // Update student
+        document.getElementById('updateStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const data = {
+                name: document.getElementById('editName').value,
+                email: document.getElementById('editEmail').value,
+                phone: document.getElementById('editPhone').value,
+                room: document.getElementById('editRoom').value,
+                course: document.getElementById('editCourse').value,
+                year: document.getElementById('editYear').value,
+                guardian_name: document.getElementById('editGuardian').value,
+                guardian_phone: document.getElementById('editGuardianPhone').value,
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/students/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    cancelEdit();
+                    loadStudents();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to update student', 'error');
+            }
+        });
+
+        // Delete student
+        let deleteStudentId = null;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        
+        async function deleteStudent(id) {
+            deleteStudentId = id;
+            
+            // Find student data to show in modal
+            const response = await fetch(`${API_BASE_URL}/admin/students?search=`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const result = await response.json();
+            const student = result.students.find(s => s.id === id);
+            
+            if (student) {
+                document.getElementById('deleteStudentInfo').textContent = `${student.name} (${student.id})`;
+            }
+            
+            deleteModal.show();
+        }
+
+        // Confirm delete
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/students/${deleteStudentId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    deleteModal.hide();
+                    loadStudents();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to delete student', 'error');
+            }
+        });
+
+        // Deactivate student
+        async function deactivateStudent(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/students/${id}/deactivate`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    loadStudents();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to deactivate student', 'error');
+            }
+        }
+
+        // Activate student
+        async function activateStudent(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/students/${id}/activate`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    loadStudents();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to activate student', 'error');
+            }
+        }
+
+        // Add student
+        document.getElementById("addStudentForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const studentData = {
+                id: document.getElementById("studentId").value.trim(),
+                name: document.getElementById("studentName").value.trim(),
+                password: document.getElementById("password").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
+                room: document.getElementById("room").value.trim(),
+                course: document.getElementById("course").value.trim(),
+                year: document.getElementById("year").value,
+                guardianName: document.getElementById("guardianName").value.trim(),
+                guardianPhone: document.getElementById("guardianPhone").value.trim()
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/students`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify(studentData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    document.getElementById("addStudentForm").reset();
+                    loadStudents();
+                } else {
+                    showToast('Error', result.message || "Failed to add student", 'error');
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                showToast('Error', 'Error connecting to server', 'error');
+            }
+        });
+
+        const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
+
+        function logout() {
+            logoutModal.show();
+        }
+
+        document.getElementById('confirmLogoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/home';
+        });
+
+        // Initialize
+        loadWardenDashboard();
+        loadGatePasses();
+        loadStudents();
+
+        // Search functionality
+        document.getElementById('search').addEventListener('input', loadStudents);
+
+        // Auto-refresh dashboard and pending gate passes every 30 seconds
+        setInterval(() => {
+            console.log('Auto-refreshing dashboard and gate passes...');
+            loadWardenDashboard();
+            loadGatePasses();
+        }, 30000);
+
+        // Log initial load
+        console.log('Dashboard initialized. Auto-refresh enabled (every 30 seconds).');
+    </script>
+</body>
+</html>

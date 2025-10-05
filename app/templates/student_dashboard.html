@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Hostel Gate Pass System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 2rem 0;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-text {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .card-modern {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .stats-card {
+            transition: transform 0.2s;
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: white;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .stats-card:hover {
+            transform: scale(1.03);
+        }
+
+        .stats-card h5 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .stats-card .fs-4 {
+            font-size: 2rem !important;
+            font-weight: 700;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-in {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        .status-out {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        .form-group-modern {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group-modern label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control-modern {
+            width: 100%;
+            padding: 0.75rem 0.875rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+
+        .form-control-modern.textarea-small {
+            padding: 0.625rem 0.875rem;
+        }
+
+        .form-control-modern:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+        }
+
+        .form-control-modern::placeholder {
+            color: #9ca3af;
+        }
+
+        .datetime-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
+        }
+
+        .status-badge {
+            padding: 0.4rem 0.875rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .table-scroll-container {
+            border-radius: 0 0 15px 15px;
+        }
+
+        .table-modern {
+            margin: 0;
+            width: 100%;
+        }
+
+        .table-modern thead {
+            background: #f8f9fa;
+        }
+
+        .table-modern th {
+            border: none;
+            padding: 0.875rem 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 0.875rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.85rem;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .btn-download:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+
+        .btn-download:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-logout {
+            background: white;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+
+        .view-more-hint {
+            display: none;
+        }
+
+        /* Modal Styles */
+        .modal-modern .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-modern .modal-header {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .modal-modern .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-modern .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-modern .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-modern .modal-footer {
+            border: none;
+            padding: 1rem 2rem 2rem;
+        }
+
+        .confirmation-text {
+            font-size: 1.1rem;
+            color: #374151;
+            text-align: center;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="header-title">
+                        <i class="fas fa-user-graduate me-2"></i>Student Dashboard
+                    </h1>
+                    <p class="welcome-text mb-0">
+                        Welcome back, <span id="studentName">Student</span>
+                    </p>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Gate Pass Stats -->
+        <div class="row mb-4" id="statsCards">
+            <!-- Filled by JS -->
+        </div>
+
+        <div class="row">
+            <!-- Gate Pass Form -->
+            <div class="col-lg-5">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>Request Gate Pass
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="message"></div>
+                        
+                        <!-- Status Indicator -->
+                        <div id="statusIndicator" class="status-indicator status-in">
+                            <i class="fas fa-home me-2"></i>
+                            <span>Status: In Hostel</span>
+                        </div>
+                        
+                        <form id="gatepassForm">
+                            <!-- Reason -->
+                            <div class="form-group-modern">
+                                <label for="reason">Reason</label>
+                                <textarea 
+                                    class="form-control-modern textarea-small" 
+                                    id="reason" 
+                                    name="reason" 
+                                    rows="2" 
+                                    placeholder="Enter reason for gate pass" 
+                                    required></textarea>
+                            </div>
+                            
+                            <!-- Destination -->
+                            <div class="form-group-modern">
+                                <label for="goingPlace">Destination</label>
+                                <input 
+                                    type="text"
+                                    class="form-control-modern" 
+                                    id="goingPlace" 
+                                    name="goingPlace"
+                                    placeholder="Enter the destination" 
+                                    required />
+                            </div>
+
+                            <!-- Out Date & Time -->
+                            <div class="datetime-group form-group-modern">
+                                <div>
+                                    <label for="fromDate">Out Date</label>
+                                    <input 
+                                        type="date" 
+                                        class="form-control-modern" 
+                                        id="fromDate" 
+                                        name="fromDate" 
+                                        required>
+                                </div>
+                                <div>
+                                    <label for="outTime">Out Time</label>
+                                    <input 
+                                        type="time" 
+                                        class="form-control-modern" 
+                                        id="outTime" 
+                                        name="outTime" 
+                                        required>
+                                </div>
+                            </div>
+
+                            <!-- Return Date & Time -->
+                            <div class="datetime-group form-group-modern">
+                                <div>
+                                    <label for="returnDate">Return Date</label>
+                                    <input 
+                                        type="date" 
+                                        class="form-control-modern" 
+                                        id="returnDate" 
+                                        name="returnDate" 
+                                        required>
+                                </div>
+                                <div>
+                                    <label for="returnTime">Return Time</label>
+                                    <input 
+                                        type="time" 
+                                        class="form-control-modern" 
+                                        id="returnTime" 
+                                        name="returnTime" 
+                                        required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary-custom w-100" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Request
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gate Pass History -->
+            <div class="col-lg-7">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>My Gate Passes
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-scroll-container">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-comment me-2"></i>Reason</th>
+                                        <th><i class="fas fa-map-marker-alt me-2"></i>Destination</th>
+                                        <th><i class="fas fa-clock me-2"></i>Out Time</th>
+                                        <th><i class="fas fa-calendar-check me-2"></i>Return Time</th>
+                                        <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                                        <th><i class="fas fa-download me-2"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gatepassTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="text-muted mt-2">Loading gate passes...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-custom"></div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade modal-modern" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to logout?</p>
+                    <p class="text-center text-muted mb-0">
+                        <small>You will need to login again to access your dashboard</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmLogoutBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i>Yes, Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        // Check authentication
+        if (!token) {
+            alert('Please login first!');
+            window.location.href = '/home';
+        }
+
+        // Set student name
+        document.getElementById('studentName').textContent = user.name || 'Student';
+
+        // Load dashboard stats
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('http://localhost:5000/api/user/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    console.error('Failed to load dashboard stats');
+                    return;
+                }
+
+                const stats = data.gatePassStats;
+                const isOut = stats.currentlyOut;
+                
+                // Update status indicator
+                const statusIndicator = document.getElementById('statusIndicator');
+                if (isOut) {
+                    statusIndicator.className = 'status-indicator status-out';
+                    statusIndicator.innerHTML = '<i class="fas fa-door-open me-2"></i><span>Status: Outside</span>';
+                } else {
+                    statusIndicator.className = 'status-indicator status-in';
+                    statusIndicator.innerHTML = '<i class="fas fa-home me-2"></i><span>Status: In Hostel</span>';
+                }
+                
+                const statsDiv = document.getElementById('statsCards');
+                statsDiv.innerHTML = `
+                    <div class="col-md-3">
+                        <div class="stats-card bg-primary">
+                            <h5>Total Passes</h5>
+                            <p class="fs-4 mb-0">${stats.total}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-success">
+                            <h5>Approved</h5>
+                            <p class="fs-4 mb-0">${stats.approved}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-warning">
+                            <h5>Pending</h5>
+                            <p class="fs-4 mb-0">${stats.pending}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-danger">
+                            <h5>Rejected</h5>
+                            <p class="fs-4 mb-0">${stats.rejected}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+            }
+        }
+
+        // Show toast notification
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const bgClass = {
+                'success': 'bg-success',
+                'error': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${title}:</strong> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        // Create gate pass
+        const form = document.getElementById('gatepassForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const originalContent = submitBtn.innerHTML;
+            
+            const data = {
+                reason: document.getElementById('reason').value,
+                goingPlace: document.getElementById('goingPlace').value,
+                fromDate: document.getElementById('fromDate').value,
+                returnDate: document.getElementById('returnDate').value,
+                outTime: document.getElementById('outTime').value,
+                returnTime: document.getElementById('returnTime').value
+            };
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="loading-spinner me-2"></span>Submitting...';
+                
+                const response = await fetch('http://localhost:5000/api/gatepass/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', result.message, 'success');
+                    form.reset();
+                    loadGatePasses();
+                    loadDashboardStats();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to submit gate pass request', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        });
+
+        // Download PDF
+        async function downloadPDF(passId) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/gatepass/download/${passId}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showToast('Error', error.message || 'Failed to download PDF', 'error');
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `GatePass_${passId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                
+                showToast('Success', 'PDF downloaded successfully!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to download PDF', 'error');
+            }
+        }
+
+        // Load gate passes
+        async function loadGatePasses() {
+            try {
+                const response = await fetch('http://localhost:5000/api/gatepass/student', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                const result = await response.json();
+                const tbody = document.getElementById('gatepassTable');
+                
+                const allPasses = result.gatePasses || [];
+                
+                // Show only recent 4 passes
+                const passes = allPasses.slice(0, 9);
+                
+                if (passes.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>No gate passes found</p>
+                                <small>Submit your first gate pass request using the form</small>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = passes.map(p => {
+                    const statusClass = {
+                        'Approved': 'status-approved',
+                        'Pending': 'status-pending',
+                        'Rejected': 'status-rejected'
+                    }[p.status] || 'status-pending';
+                    
+                    const statusIcon = {
+                        'Approved': 'fa-check-circle',
+                        'Pending': 'fa-clock',
+                        'Rejected': 'fa-times-circle'
+                    }[p.status] || 'fa-question-circle';
+                    
+                    const canDownload = p.status === 'Approved';
+                    
+                    // Format dates
+                    const outDate = new Date(p.from_date);
+                    const returnDate = p.return_date ? new Date(p.return_date) : null;
+                    
+                    const formatDateTime = (date, time) => {
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const day = date.getDate();
+                        const month = months[date.getMonth()];
+                        
+                        // Convert 24hr to 12hr format
+                        const [hours, minutes] = time.split(':');
+                        const hour = parseInt(hours);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour % 12 || 12;
+                        
+                        return `${month} ${day < 10 ? '0' + day : day}, ${displayHour}:${minutes} ${ampm}`;
+                    };
+                    
+                    const outTimeFormatted = formatDateTime(outDate, p.out_time);
+                    const returnTimeFormatted = returnDate ? formatDateTime(returnDate, p.return_time) : 'N/A';
+                    
+                    return `
+                        <tr>
+                            <td><strong>${p.reason}</strong></td>
+                            <td>${p.going_place}</td>
+                            <td>${outTimeFormatted}</td>
+                            <td>${returnTimeFormatted}</td>
+                            <td>
+                                <span class="status-badge ${statusClass}">
+                                    <i class="fas ${statusIcon} me-1"></i>${p.status}
+                                </span>
+                            </td>
+                            <td>
+                                <button 
+                                    class="btn btn-download btn-sm" 
+                                    onclick="downloadPDF('${p.pass_id}')"
+                                    ${!canDownload ? 'disabled title="PDF available only for approved passes"' : ''}>
+                                    <i class="fas fa-download me-1"></i>PDF
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (err) {
+                console.error(err);
+                document.getElementById('gatepassTable').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Failed to load gate passes
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Logout
+        const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
+        
+        function logout() {
+            logoutModal.show();
+        }
+
+        // Confirm logout
+        document.getElementById('confirmLogoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/home';
+        });
+
+        // Set minimum date to today
+        document.getElementById('fromDate').min = new Date().toISOString().split('T')[0];
+
+        // Load data on page load
+        loadDashboardStats();
+        loadGatePasses();
+    </script>
+</body>
+</html>

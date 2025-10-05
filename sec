@@ -1,0 +1,160 @@
+<!-- security_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-4">
+    <h2>Security Dashboard</h2>
+
+    <h4 class="mt-4">Mark Out (Today’s Passes)</h4>
+    <table class="table table-bordered" id="todayPassesTable">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Room</th>
+          <th>Going Place</th>
+          <th>Out Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h4 class="mt-4">Currently Out Students</h4>
+    <table class="table table-bordered" id="currentlyOutTable">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Room</th>
+          <th>Going Place</th>
+          <th>Marked Out At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h4 class="mt-4">Logs</h4>
+    <table class="table table-bordered" id="logsTable">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Action</th>
+          <th>Performed By</th>
+          <th>Remarks</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token"); // JWT token
+
+    async function fetchDashboard() {
+      try {
+        const res = await fetch("/api/user/dashboard", {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        });
+        const data = await res.json();
+
+        // Clear tables
+        document.querySelector("#todayPassesTable tbody").innerHTML = "";
+        document.querySelector("#currentlyOutTable tbody").innerHTML = "";
+        document.querySelector("#logsTable tbody").innerHTML = "";
+
+        // Today’s passes (Mark Out)
+        const todayPasses = data.todayPasses || [];
+        todayPasses.forEach(gp => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${gp.student_name}</td>
+            <td>${gp.room_no}</td>
+            <td>${gp.going_place}</td>
+            <td>${gp.out_time}</td>
+            <td>
+              <button class="btn btn-success btn-sm" onclick="markOut('${gp.pass_id}')">Mark Out</button>
+            </td>
+          `;
+          document.querySelector("#todayPassesTable tbody").appendChild(row);
+        });
+
+        // Currently Out Students
+        const currentlyOut = data.currentlyOut || [];
+        currentlyOut.forEach(gp => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${gp.student_name}</td>
+            <td>${gp.room_no}</td>
+            <td>${gp.going_place}</td>
+            <td>${gp.actual_out_time || gp.out_time}</td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="markReturn('${gp.pass_id}')">Mark Return</button>
+            </td>
+          `;
+          document.querySelector("#currentlyOutTable tbody").appendChild(row);
+        });
+
+        // Logs
+        const logs = data.logs || [];
+        logs.forEach(log => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${log.student_name}</td>
+            <td>${log.action}</td>
+            <td>${log.performed_by}</td>
+            <td>${log.remarks || "-"}</td>
+            <td>${log.timestamp}</td>
+          `;
+          document.querySelector("#logsTable tbody").appendChild(row);
+        });
+
+      } catch (err) {
+        console.error("Failed to fetch dashboard:", err);
+        alert("Failed to load dashboard");
+      }
+    }
+
+    async function markOut(passId) {
+      try {
+        const res = await fetch(`/api/gatepass/mark-exit/${passId}`, {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        alert(data.message);
+        fetchDashboard(); // Refresh tables
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function markReturn(passId) {
+      try {
+        const res = await fetch(`/api/gatepass/mark-return/${passId}`, {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        alert(data.message);
+        fetchDashboard(); // Refresh tables
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Initial load
+    fetchDashboard();
+  </script>
+</body>
+</html>

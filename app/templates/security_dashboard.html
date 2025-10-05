@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard - Hostel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 2rem 0;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-modern {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-logout {
+            background: white;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .status-out {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.4rem 0.875rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .status-in {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.4rem 0.875rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .btn-mark-exit {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .btn-mark-exit:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-mark-return {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .btn-mark-return:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .table-modern {
+            margin: 0;
+        }
+
+        .table-modern thead {
+            background: #f8f9fa;
+        }
+
+        .table-modern th {
+            border: none;
+            padding: 0.875rem 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 0.875rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.85rem;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .toast-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6b7280;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .student-id {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .room-badge {
+            background: #dbeafe;
+            color: var(--primary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .badge-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .badge-exited {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-returned {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Modal Styles */
+        .modal-modern .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-modern .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .modal-modern .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-modern .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-modern .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-modern .modal-footer {
+            border: none;
+            padding: 1rem 2rem 2rem;
+        }
+
+        .modal-exit .modal-header {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+        }
+
+        .modal-return .modal-header {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+        }
+
+        .confirmation-text {
+            font-size: 1.1rem;
+            color: #374151;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .student-info-box {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .student-info-box .info-label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .student-info-box .info-value {
+            font-size: 1rem;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        /* Logout Modal */
+        .modal-logout .modal-header {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="text-primary mb-1">
+                        <i class="fas fa-shield-alt me-2"></i>Security Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Welcome, <span id="securityName">Security Officer</span>
+                    </p>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
+                    <h3 id="totalApproved">0</h3>
+                    <small>Today's Passes</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <h3 id="currentlyOut">0</h3>
+                    <small>Currently Out</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#activePassesTab">
+                    <i class="fas fa-door-open me-2"></i>Active Gate Passes
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#logsTab">
+                    <i class="fas fa-clipboard-list me-2"></i>Gate Pass Logs
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Active Gate Passes Tab -->
+            <div class="tab-pane fade show active" id="activePassesTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-door-open me-2"></i>Approved Gate Passes (Pending Return)
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-user me-2"></i>Student</th>
+                                        <th><i class="fas fa-door-open me-2"></i>Room</th>
+                                        <th><i class="fas fa-comment me-2"></i>Reason & Destination</th>
+                                        <th><i class="fas fa-clock me-2"></i>Time Schedule</th>
+                                        <th><i class="fas fa-exchange-alt me-2"></i>Status</th>
+                                        <th><i class="fas fa-cog me-2"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gatepassTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="text-muted mt-2">Loading gate passes...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gate Pass Logs Tab -->
+            <div class="tab-pane fade" id="logsTab">
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>Gate Pass Activity Logs
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-user me-2"></i>Student</th>
+                                        <th><i class="fas fa-door-open me-2"></i>Room</th>
+                                        <th><i class="fas fa-comment me-2"></i>Reason & Destination</th>
+                                        <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                                        <th><i class="fas fa-clock me-2"></i>Activity Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gatepassLogs">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="text-muted mt-2">Loading logs...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-custom"></div>
+
+    <!-- Exit Confirmation Modal -->
+    <div class="modal fade modal-modern modal-exit" id="exitModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Student Exit
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to mark this student as exited?</p>
+                    <div class="student-info-box" id="exitStudentInfo">
+                        <!-- Will be filled by JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmExitBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Exit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Confirmation Modal -->
+    <div class="modal fade modal-modern modal-return" id="returnModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-in-alt me-2"></i>Confirm Student Return
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to mark this student as returned?</p>
+                    <div class="student-info-box" id="returnStudentInfo">
+                        <!-- Will be filled by JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmReturnBtn">
+                        <i class="fas fa-sign-in-alt me-2"></i>Confirm Return
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade modal-modern modal-logout" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to logout?</p>
+                    <p class="text-center text-muted mb-0">
+                        <small>You will need to login again to access your dashboard</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmLogoutBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i>Yes, Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const token = localStorage.getItem('token');
+
+        // Check authentication
+        if (!token) {
+            alert('Please login first!');
+            window.location.href = '/home';
+        }
+
+        // Toast notification
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const bgClass = {
+                'success': 'bg-success',
+                'error': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body"><strong>${title}:</strong> ${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load dashboard');
+                }
+
+                const data = await response.json();
+                
+                if (data.user) {
+                    document.getElementById('securityName').textContent = data.user.name;
+                }
+                
+                if (data.securityStats) {
+                    document.getElementById('totalApproved').textContent = data.securityStats.todayPasses || 0;
+                    document.getElementById('currentlyOut').textContent = data.securityStats.currentlyOut || 0;
+                }
+                
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Format date time to 12-hour format
+        function formatDateTime(dateStr, timeStr) {
+            const date = new Date(dateStr + 'T' + timeStr);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            
+            return `${month} ${day}, ${hours}:${minutes} ${ampm}`;
+        }
+
+        // Format timestamp to 12-hour format
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            
+            return `${month} ${day}, ${hours}:${minutes} ${ampm}`;
+        }
+
+        // Load active gate passes
+        async function loadGatePasses() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/approved`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const result = await response.json();
+                const tbody = document.getElementById('gatepassTable');
+                let passes = result.approvedPasses || [];
+
+                // Filter to show only gate passes that are NOT yet returned
+                passes = passes.filter(gp => gp.actual_return_time === null);
+
+                // Sort by created_at (newest first)
+                passes.sort((a, b) => {
+                    const dateA = new Date(a.created_at || 0);
+                    const dateB = new Date(b.created_at || 0);
+                    return dateB - dateA;
+                });
+
+                if (passes.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-clipboard-check"></i>
+                                <p>No active gate passes</p>
+                                <small>All students have returned</small>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = passes.map(gp => `
+                    <tr>
+                        <td>
+                            <div class="student-name">${gp.student_name}</div>
+                            <div class="student-id">${gp.student_id}</div>
+                        </td>
+                        <td><span class="room-badge">${gp.room_no}</span></td>
+                        <td>
+                            <strong>${gp.reason}</strong><br>
+                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>${gp.going_place || 'Not specified'}</small>
+                        </td>
+                        <td>
+                            <small>
+                                <strong>Out:</strong> ${formatDateTime(gp.from_date, gp.out_time)}<br>
+                                <strong>Return:</strong> ${formatDateTime(gp.return_date, gp.return_time)}
+                            </small>
+                        </td>
+                        <td><span class="status-${gp.exit_status.toLowerCase()}">${gp.exit_status}</span></td>
+                        <td>
+                            ${gp.exit_status === 'In' ? `
+                                <button class="btn btn-mark-exit btn-sm w-100" onclick="markExit('${gp.pass_id}')">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Mark Exit
+                                </button>
+                            ` : `
+                                <button class="btn btn-mark-return btn-sm w-100" onclick="markReturn('${gp.pass_id}')">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Mark Return
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to load gate passes', 'error');
+            }
+        }
+
+        // Load gate pass logs
+        async function loadGatePassLogs() {
+            const tbody = document.getElementById('gatepassLogs');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/approved`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+                let passes = result.approvedPasses || [];
+
+                // Filter only passes where out or return logs exist
+                const logPasses = passes.filter(gp => gp.actual_out_time || gp.actual_return_time);
+
+                // Sort logs by latest update time
+                logPasses.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+
+                if (logPasses.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>No gate pass logs found</p>
+                                <small>Activity logs will appear here</small>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = logPasses.map(gp => {
+                    const logType = gp.actual_return_time
+                        ? '<span class="badge-status badge-returned"><i class="fas fa-check-circle me-1"></i>Returned</span>'
+                        : '<span class="badge-status badge-exited"><i class="fas fa-door-open me-1"></i>Exited</span>';
+
+                    const logTime = gp.actual_return_time
+                        ? formatTimestamp(gp.actual_return_time)
+                        : formatTimestamp(gp.actual_out_time);
+
+                    return `
+                        <tr>
+                            <td>
+                                <div class="student-name">${gp.student_name}</div>
+                                <div class="student-id">${gp.student_id}</div>
+                            </td>
+                            <td><span class="room-badge">${gp.room_no}</span></td>
+                            <td>
+                                <strong>${gp.reason}</strong><br>
+                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>${gp.going_place || 'Not specified'}</small>
+                            </td>
+                            <td>${logType}</td>
+                            <td><small>${logTime}</small></td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-danger py-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Failed to load gate pass logs
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Mark exit
+        let currentPassId = null;
+        let currentPassData = null;
+        const exitModal = new bootstrap.Modal(document.getElementById('exitModal'));
+        const returnModal = new bootstrap.Modal(document.getElementById('returnModal'));
+
+        async function markExit(passId) {
+            currentPassId = passId;
+            
+            // Find pass data to show in modal
+            const response = await fetch(`${API_BASE_URL}/gatepass/approved`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            const pass = result.approvedPasses.find(p => p.pass_id === passId);
+            
+            if (pass) {
+                currentPassData = pass;
+                document.getElementById('exitStudentInfo').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Student Name</div>
+                            <div class="info-value">${pass.student_name}</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Student ID</div>
+                            <div class="info-value">${pass.student_id}</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Room Number</div>
+                            <div class="info-value">${pass.room_no}</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Destination</div>
+                            <div class="info-value">${pass.going_place || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            exitModal.show();
+        }
+
+        // Confirm exit
+        document.getElementById('confirmExitBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/mark-exit/${currentPassId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ remarks: 'Exited via main gate' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', 'Student marked as exited', 'success');
+                    exitModal.hide();
+                    await loadDashboard();
+                    await loadGatePasses();
+                    await loadGatePassLogs();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to mark exit', 'error');
+            }
+        });
+
+        // Mark return
+        async function markReturn(passId) {
+            currentPassId = passId;
+            
+            // Find pass data to show in modal
+            const response = await fetch(`${API_BASE_URL}/gatepass/approved`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            const pass = result.approvedPasses.find(p => p.pass_id === passId);
+            
+            if (pass) {
+                currentPassData = pass;
+                document.getElementById('returnStudentInfo').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Student Name</div>
+                            <div class="info-value">${pass.student_name}</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Student ID</div>
+                            <div class="info-value">${pass.student_id}</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Room Number</div>
+                            <div class="info-value">${pass.room_no}</div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="info-label">Exited At</div>
+                            <div class="info-value">${pass.actual_out_time ? formatTimestamp(pass.actual_out_time) : 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            returnModal.show();
+        }
+
+        // Confirm return
+        document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/gatepass/mark-return/${currentPassId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ remarks: 'Returned via main gate' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Success', 'Student marked as returned', 'success');
+                    returnModal.hide();
+                    await loadDashboard();
+                    await loadGatePasses();
+                    await loadGatePassLogs();
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error', 'Failed to mark return', 'error');
+            }
+        });
+
+        // Logout
+        const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
+        
+        function logout() {
+            logoutModal.show();
+        }
+
+        // Confirm logout
+        document.getElementById('confirmLogoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/home';
+        });
+
+        // Initialize
+        loadDashboard();
+        loadGatePasses();
+        loadGatePassLogs();
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            console.log('Auto-refreshing security dashboard...');
+            loadDashboard();
+            loadGatePasses();
+            loadGatePassLogs();
+        }, 30000);
+
+        console.log('Security dashboard initialized. Auto-refresh enabled (every 30 seconds).');
+    </script>
+</body>
+</html>
