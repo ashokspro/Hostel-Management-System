@@ -176,24 +176,6 @@ PUT    /api/user/profile            # Update profile
 GET    /api/user/dashboard          # Get dashboard stats
 ```
 
-## 🎨 Screenshots
-
-### Student Dashboard
-![Student Dashboard](screenshots/student-dashboard.png)
-*Modern interface with gate pass request form and history*
-
-### Warden Dashboard
-![Warden Dashboard](screenshots/warden-dashboard.png)
-*Comprehensive approval system with search and filtering*
-
-### Security Dashboard
-![Security Dashboard](screenshots/security-dashboard.png)
-*Real-time entry/exit logging with currently out students*
-
-### Gate Pass PDF
-![Gate Pass PDF](screenshots/gate-pass-pdf.png)
-*Professional PDF with QR code verification*
-
 ## 🧠 Future Enhancements
 
 - [ ] 📧 **Email Notifications** – Automated emails for gate pass status updates
@@ -252,9 +234,7 @@ Contributions are welcome! If you'd like to improve this project:
 - 📄 PDF generation with QR codes
 - 🎨 Modern UI with Bootstrap 5
 
-```
 
-```
 
 ## 💬 Contact & Support
 
