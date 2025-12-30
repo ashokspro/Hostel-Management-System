@@ -256,8 +256,8 @@ class User(db.Model):
 
 
 #new
-from app import db
-from app.models.user import User
+# from app import db
+# from app.models.user import User
 
 def create_user(user_data):
     """

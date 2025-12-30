@@ -286,7 +286,10 @@ def create_gate_pass_pdf(gate_pass, student):
     pdf.rect(10, 10, 190, 277)
     
     # Output PDF to buffer
-    pdf_output = pdf.output(dest='S').encode('latin1')
+    
+    pdf_output = pdf.output(dest='S')
+    if isinstance(pdf_output, str):
+        pdf_output = pdf_output.encode('latin1')
     buffer = BytesIO(pdf_output)
     buffer.seek(0)
     

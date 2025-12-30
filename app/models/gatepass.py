@@ -257,7 +257,6 @@ class GatePass(db.Model):
         if self.exit_status != 'Out':
             return False
         ###
-        from datetime import datetime
 
 # Combine date and time into a single datetime
         expected_return = datetime.combine(self.return_date, self.return_time)  # return_date is a date object, return_time is a time object

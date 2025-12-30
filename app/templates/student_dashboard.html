@@ -538,7 +538,7 @@
         // Load dashboard stats
         async function loadDashboardStats() {
             try {
-                const response = await fetch('http://localhost:5000/api/user/dashboard', {
+                const response = await fetch('/api/user/dashboard', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await response.json();
@@ -642,7 +642,7 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="loading-spinner me-2"></span>Submitting...';
                 
-                const response = await fetch('http://localhost:5000/api/gatepass/create', {
+                const response = await fetch('/api/gatepass/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -673,7 +673,7 @@
         // Download PDF
         async function downloadPDF(passId) {
             try {
-                const response = await fetch(`http://localhost:5000/api/gatepass/download/${passId}`, {
+                const response = await fetch(`/api/gatepass/download/${passId}`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
 
@@ -703,7 +703,7 @@
         // Load gate passes
         async function loadGatePasses() {
             try {
-                const response = await fetch('http://localhost:5000/api/gatepass/student', {
+                const response = await fetch('/api/gatepass/student', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 

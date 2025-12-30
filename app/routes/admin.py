@@ -18,22 +18,6 @@ admin_bp = Blueprint('admin', __name__)
 
 
 
-"""#new
-from flask import render_template
-
-@admin_bp.route('/create-student-page', methods=['GET'])
-@jwt_required()
-def create_student_dashboard():
-    current_user_id = get_jwt_identity()
-    current_user = User.find_by_id(current_user_id)
-    
-    if not current_user or current_user.user_type != 'warden':
-        return "Unauthorized", 403
-    
-    return render_template('create_student.html')
-##
-"""
-
 @admin_bp.route('/students', methods=['GET'])
 @jwt_required()
 def get_all_students():
