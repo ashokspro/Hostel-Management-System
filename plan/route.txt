@@ -1,0 +1,32 @@
+1. Project setup
+2. Database connection
+3. Models
+4. Schemas
+5. Authentication
+6. User management
+7. Gate pass APIs
+8. Templates integration
+9. PDF generation
+10. Security workflow
+11. Testing
+
+
+wa
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJXQVJERU4wMDEiLCJ1c2VyX3R5cGUiOiJ3YXJkZW4iLCJleHAiOjE3Nzk4NTg3MDl9.awkrawxTFYVHLQmJN083BKEmgPAcFaP81Cbkg-5iUHs
+
+stu 
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJTVFUwMDEiLCJ1c2VyX3R5cGUiOiJzdHVkZW50IiwiZXhwIjoxNzc5ODU4MzU0fQ.qf7ITCeaMgyag-RLB-q9PWFHqJdLwg0t7C0TYKbq2jE
+
+security
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJTRUNVUklUWTAwMSIsInVzZXJfdHlwZSI6InNlY3VyaXR5IiwiZXhwIjoxNzc5ODU5MzIzfQ.z-GSMM8LBpEnMNkuqbPkRkeP6g1vSO8GuNutI8PHIvc
+
+
+
+there was an issue in the exit or return {
+    "detail": "Student has already been marked as returned"
+}
+
+like the student can able marked as exit and then when i tried to return it tells like {
+    "detail": "Student has already been marked as returned"
+} resolve this issue check for like this issue in the project and also when i tried to import
+openapi.json in the postman exit folder endpoint not opened properly    
