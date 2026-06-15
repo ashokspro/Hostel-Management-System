@@ -42,25 +42,22 @@ axiosInstance.interceptors.request.use(
 // ── RESPONSE INTERCEPTOR ──────────────────────────────────
 // Runs automatically AFTER every single API response
 // Perfect place to handle global errors like expired tokens
+// src/api/axiosInstance.js
+
 axiosInstance.interceptors.response.use(
     (response) => {
-        // 2xx responses — just pass through
         return response;
     },
     (error) => {
         const status = error.response?.status;
 
-        // 401 = Unauthorized — token expired or invalid
-        // Clear storage and redirect to login
-        if (status === 401) {
+        // Don't auto-redirect on login failures — let Login.jsx handle the error
+        const isLoginRequest = error.config?.url?.includes('/api/auth/login');
+
+        if (status === 401 && !isLoginRequest) {
             tokenHelper.clear();
-            // Hard redirect — clears all React state too
             window.location.href = '/login';
         }
-
-        // 403 = Forbidden — wrong role tried to access a route
-        // Let individual components handle this with their own error messages
-        // We just pass it through
 
         return Promise.reject(error);
     }

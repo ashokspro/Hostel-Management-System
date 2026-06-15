@@ -20,14 +20,10 @@ IST = pytz.timezone("Asia/Kolkata")
 def format_datetime(dt: datetime | None) -> str:
     """
     Converts UTC datetime to IST string for display.
-    Returns "N/A" if datetime is None.
-    
-    Example:
-        UTC: 2026-05-26 05:09:12+00:00
-        IST: 26-May-2026 10:39 AM
+    Returns "Not provided" if datetime is None.
     """
     if not dt:
-        return "N/A"
+        return "Not provided"
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     ist_time = dt.astimezone(IST)
@@ -37,16 +33,31 @@ def format_datetime(dt: datetime | None) -> str:
 def format_date(d) -> str:
     """Formats a date object to readable string."""
     if not d:
-        return "N/A"
+        return "Not provided"
     return d.strftime("%d-%b-%Y")
 
 
 def format_time(t) -> str:
     """Formats a time object to readable string."""
     if not t:
-        return "N/A"
+        return "Not provided"
     return t.strftime("%I:%M %p")
 
+# ── Add this helper near the top, after format_time() ────────
+
+def safe_value(value, placeholder: str = "Not provided") -> str:
+    """
+    Returns a consistent placeholder for missing/empty values.
+    Treats None, empty string, "None", "N/A" as missing.
+    """
+    if value is None:
+        return placeholder
+    
+    str_value = str(value).strip()
+    if str_value == "" or str_value.lower() in ("none", "n/a", "null"):
+        return placeholder
+    
+    return str_value
 
 class GatePassPDF(FPDF):
     """
@@ -114,21 +125,23 @@ def draw_section_header(pdf: FPDF, title: str):
 def draw_field(pdf: FPDF, label: str, value: str, col_width: float = 90):
     """
     Draws a label-value pair in two columns.
-    
-    Example:
-        "Student Name:"    "John Doe"
-        "Room Number:"     "101"
-    
-    col_width controls label column width.
-    Value gets the remaining space.
+    Empty/missing values are shown in gray italic as "Not provided".
     """
     pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(80, 80, 80)              # dark gray label
+    pdf.set_text_color(80, 80, 80)
     pdf.cell(col_width, 7, label)
 
-    pdf.set_font("Helvetica", "", 9)
-    pdf.set_text_color(30, 30, 30)              # near black value
-    pdf.cell(0, 7, str(value), new_x="LMARGIN", new_y="NEXT")
+    display_value = safe_value(value)
+
+    if display_value == "Not provided":
+        # Gray italic for missing data
+        pdf.set_font("Helvetica", "I", 9)
+        pdf.set_text_color(160, 160, 160)
+    else:
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(30, 30, 30)
+
+    pdf.cell(0, 7, display_value, new_x="LMARGIN", new_y="NEXT")
 
 
 def draw_status_badge(pdf: FPDF, status: str):
@@ -184,7 +197,7 @@ def generate_gatepass_pdf(gatepass: GatePass) -> bytes:
     guardian_phone = student.guardian_phone if student else "N/A"
 
     # Get approver info
-    approver_name = gatepass.approver.name if gatepass.approver else "N/A"
+    approver_name = gatepass.approver.name if gatepass.approver else None
 
     # ── Create PDF ────────────────────────────────────────────
     pdf = GatePassPDF(orientation="P", unit="mm", format="A4")
@@ -223,11 +236,11 @@ def generate_gatepass_pdf(gatepass: GatePass) -> bytes:
     draw_section_header(pdf, "STUDENT INFORMATION")
     draw_field(pdf, "Student ID:", gatepass.student_id)
     draw_field(pdf, "Student Name:", student_name)
-    draw_field(pdf, "Room Number:", room_no or "N/A")
-    draw_field(pdf, "Course:", course or "N/A")
-    draw_field(pdf, "Year:", year or "N/A")
-    draw_field(pdf, "Phone:", phone or "N/A")
-    draw_field(pdf, "Guardian Phone:", guardian_phone or "N/A")
+    draw_field(pdf, "Room Number:", room_no)
+    draw_field(pdf, "Course:", course)
+    draw_field(pdf, "Year:", year)
+    draw_field(pdf, "Phone:", phone)
+    draw_field(pdf, "Guardian Phone:", guardian_phone)
     pdf.ln(4)
 
     # ── Gate pass details ─────────────────────────────────────
@@ -245,20 +258,19 @@ def generate_gatepass_pdf(gatepass: GatePass) -> bytes:
     draw_section_header(pdf, "APPROVAL INFORMATION")
     draw_field(pdf, "Approved By:", approver_name)
     draw_field(pdf, "Approved At:", format_datetime(gatepass.approved_at))
-    draw_field(pdf, "Warden Remarks:", gatepass.remarks or "None")
+    draw_field(pdf, "Warden Remarks:", gatepass.remarks)
     pdf.ln(4)
 
     # ── Security tracking ─────────────────────────────────────
     draw_section_header(pdf, "SECURITY TRACKING")
 
-    # Split "ExitStatus.IN" → "In", "ExitStatus.OUT" → "Out"
     exit_status_display = str(gatepass.exit_status).split(".")[-1].title()
 
     draw_field(pdf, "Current Status:", exit_status_display)
     draw_field(pdf, "Actual Exit Time:", format_datetime(gatepass.actual_out_time))
     draw_field(pdf, "Actual Return Time:", format_datetime(gatepass.actual_return_time))
     draw_field(pdf, "Actual Return Date:", format_date(gatepass.actual_return_date))
-    draw_field(pdf, "Security Remarks:", gatepass.security_remarks or "None")
+    draw_field(pdf, "Security Remarks:", gatepass.security_remarks)
     pdf.ln(4)
 
     # ── Return PDF as bytes ───────────────────────────────────

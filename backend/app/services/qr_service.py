@@ -38,7 +38,6 @@ def generate_qr(pass_id: str, pass_number: str) -> str:
     qr_data = (
         f"Pass Number: {pass_number}\n"
         f"Pass ID: {pass_id}\n"
-        f"Verify at: hostel-mgmt/verify/{pass_id}"
     )
 
     # Create QR code object

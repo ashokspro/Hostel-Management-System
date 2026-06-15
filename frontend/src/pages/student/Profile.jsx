@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import studentApi from '../../api/studentApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import usePageTitle from '../../hooks/usePageTitle';
 
 // Fields the student is allowed to edit themselves
 const editableFields = ['phone', 'email', 'guardian_name', 'guardian_phone'];
 
 function Profile() {
+    usePageTitle('My Profile');
+
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving,  setSaving]  = useState(false);
@@ -72,19 +75,31 @@ function Profile() {
     if (loading) return <LoadingSpinner text="Loading profile..." />;
     if (!profile) return <p className="text-gray-500">Could not load profile.</p>;
 
-    // Read-only fields — shown but never editable here
-    const readonlyFields = [
-        { label: 'Student ID', value: profile.id },
-        { label: 'Name',       value: profile.name },
-        { label: 'Room',       value: profile.room || '—' },
-        { label: 'Course',     value: profile.course || '—' },
-        { label: 'Year',       value: profile.year || '—' },
-    ];
-
     return (
         <div className="max-w-2xl">
-            <div className="flex items-center justify-between mb-5">
-                <h1 className="text-xl font-bold text-gray-800">My Profile</h1>
+
+            {/* ── Profile header card ─────────────────────── */}
+            <div className="bg-gradient-to-br from-blue-800 to-blue-500 rounded-xl
+                            shadow-sm p-6 mb-5 text-white flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/15 backdrop-blur
+                                flex items-center justify-center text-2xl font-bold
+                                border-2 border-white/30 flex-shrink-0">
+                    {profile.name?.charAt(0).toUpperCase() || '?'}
+                </div>
+                <div className="min-w-0">
+                    <h1 className="text-lg font-bold truncate">{profile.name}</h1>
+                    <p className="text-blue-100 text-sm mt-0.5">
+                        {profile.id} · Room {profile.room || '—'}
+                    </p>
+                    <p className="text-blue-200 text-xs mt-0.5">
+                        {profile.course || '—'} · {profile.year || '—'}
+                    </p>
+                </div>
+            </div>
+
+            {/* ── Section header + edit button ────────────── */}
+            <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold text-gray-700">Contact Information</h2>
                 {!editMode && (
                     <button
                         onClick={() => setEditMode(true)}
@@ -97,20 +112,9 @@ function Profile() {
                 )}
             </div>
 
+            {/* ── Contact info card ───────────────────────── */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
-                {/* ── Read-only info ─────────────────────── */}
-                <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-100">
-                    {readonlyFields.map(f => (
-                        <div key={f.label}>
-                            <p className="text-xs font-semibold text-gray-400
-                                          uppercase tracking-wide mb-1">{f.label}</p>
-                            <p className="text-sm font-medium text-gray-800">{f.value}</p>
-                        </div>
-                    ))}
-                </div>
-
-                {/* ── Editable fields ────────────────────── */}
                 {editMode ? (
                     <form onSubmit={handleSave} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -119,6 +123,8 @@ function Profile() {
                                                   text-gray-500 uppercase mb-1">Phone</label>
                                 <input
                                     name="phone" value={form.phone} onChange={handleChange}
+                                    pattern="[0-9]{10}" maxLength={10}
+                                    title="Phone must be exactly 10 digits"
                                     className="w-full border-2 border-gray-200 rounded-lg
                                               px-3 py-2 text-sm focus:border-blue-600
                                               focus:outline-none bg-gray-50"
@@ -149,6 +155,8 @@ function Profile() {
                                                   text-gray-500 uppercase mb-1">Guardian Phone</label>
                                 <input
                                     name="guardian_phone" value={form.guardian_phone} onChange={handleChange}
+                                    pattern="[0-9]{10}" maxLength={10}
+                                    title="Phone must be exactly 10 digits"
                                     className="w-full border-2 border-gray-200 rounded-lg
                                               px-3 py-2 text-sm focus:border-blue-600
                                               focus:outline-none bg-gray-50"

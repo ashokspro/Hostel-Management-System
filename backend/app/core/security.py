@@ -7,6 +7,8 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
+import secrets
+import hashlib
 
 # ── Password hashing ──────────────────────────────────────────
 # CryptContext is passlib's way of managing hashing algorithms
@@ -93,3 +95,48 @@ def decode_access_token(token: str) -> dict | None:
     except JWTError:
         # JWTError covers: expired, invalid signature, malformed
         return None
+    
+
+# ── Password reset token helpers ──────────────────────────────
+
+def generate_reset_token() -> str:
+    """
+    Generates a secure random token sent to the user via email.
+    URL-safe, 32 bytes → 43-character string.
+    """
+    return secrets.token_urlsafe(32)
+
+
+def hash_reset_token(token: str) -> str:
+    """
+    Hashes the token before storing in the database.
+    We never store the raw token — only its SHA-256 hash.
+    When the user clicks the link, we hash their token
+    and compare against the stored hash.
+    """
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def generate_temp_password() -> str:
+    """
+    Generates a random temporary password for admin-initiated resets.
+    Format guarantees it passes the password strength validator:
+    - 12 chars total
+    - At least 1 upper, 1 lower, 1 digit, 1 special
+    """
+    import random
+    import string
+
+    upper   = random.choice(string.ascii_uppercase)
+    lower   = random.choice(string.ascii_lowercase)
+    digit   = random.choice(string.digits)
+    special = random.choice("!@#$%^&*")
+    rest    = ''.join(random.choices(
+        string.ascii_letters + string.digits, k=8
+    ))
+
+    password = upper + lower + digit + special + rest
+    # Shuffle so it's not predictable pattern
+    password_list = list(password)
+    random.shuffle(password_list)
+    return ''.join(password_list)

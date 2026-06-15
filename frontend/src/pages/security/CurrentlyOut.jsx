@@ -6,12 +6,13 @@ import securityApi from '../../api/securityApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ConfirmModal from '../../components/ConfirmModal';
 import { formatTableDate, formatTime12h, formatDateTime12h } from '../../utils/dateFormat';
+import usePageTitle from '../../hooks/usePageTitle';
 
 function CurrentlyOut() {
     const [passes,  setPasses]  = useState([]);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState({ open: false, pass: null });
-
+    usePageTitle('Currently Out');
     useEffect(() => {
         load();
     }, []);

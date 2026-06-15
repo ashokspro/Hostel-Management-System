@@ -23,7 +23,19 @@ import Students         from '../pages/warden/Students';
 import SecurityDashboard from '../pages/security/SecurityDashboard';
 import ApprovedPasses    from '../pages/security/ApprovedPasses';
 import CurrentlyOut      from '../pages/security/CurrentlyOut';
+import History from '../pages/security/History';
 
+import AdminDashboard  from '../pages/admin/AdminDashboard';
+import CreateUser      from '../pages/admin/CreateUser';
+import ManageStudents  from '../pages/admin/ManageStudents';
+import ManageWardens   from '../pages/admin/ManageWardens';
+import ManageSecurity  from '../pages/admin/ManageSecurity';
+
+import ManageAdmins from '../pages/admin/ManageAdmins';
+
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword   from '../pages/ResetPassword';
+import ChangePassword  from '../pages/ChangePassword';
 
 function RoleRedirect() {
     const { isLoggedIn, userType } = useAuth();
@@ -109,27 +121,56 @@ function AppRoutes() {
     <Route path="dashboard" element={<SecurityDashboard />} />
     <Route path="approved"  element={<ApprovedPasses />} />
     <Route path="out"       element={<CurrentlyOut />} />
+    <Route path="history"   element={<History />} />
 </Route>
 
 
 
-            {/* ── Admin section ──────────────────────────────
             <Route
-                path="/admin"
-                element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                        <DashboardLayout />
-                    </ProtectedRoute>
-                }
-            >
-                <Route path="dashboard" element={<AdminDashboard />} />
-            </Route> */}
+    path="/admin"
+    element={
+        <ProtectedRoute allowedRoles={['admin']}>
+            <DashboardLayout />
+        </ProtectedRoute>
+    }
+>
+    <Route path="dashboard" element={<AdminDashboard />} />
+    <Route path="create"    element={<CreateUser />} />
+    <Route path="students"  element={<ManageStudents />} />
+    <Route path="wardens"   element={<ManageWardens />} />
+    <Route path="security"  element={<ManageSecurity />} />
+    <Route path="admins" element={<ManageAdmins />} />
+</Route>
 
 
             {/* ── Catch-all ────────────────────────────────── */}
             <Route path="*" element={<NotFound />} />
 
+
+
+// Add to public routes section:
+<Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password"  element={<ResetPassword />} />
+
+// Add a role-agnostic protected route — works for ANY logged-in user
+// Sidebar still renders correctly because it reads userType() from context,
+// not from the URL path
+<Route
+    path="/account"
+    element={
+        <ProtectedRoute>
+            <DashboardLayout />
+        </ProtectedRoute>
+    }
+>
+    <Route path="change-password" element={<ChangePassword />} />
+</Route>
+
         </Routes>
+
+    
+
+
     );
 }
 

@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: list[AnyHttpUrl] = ["http://localhost:8000"]
 
+    #Password Reset
+    RESEND_API_KEY: str
+    EMAIL_FROM: str = "onboarding@resend.dev"
+    FRONTEND_URL: str = "http://localhost:5173"
+    RESET_TOKEN_EXPIRE_MINUTES: int = 60
 
 @lru_cache()
 def get_settings() -> Settings:

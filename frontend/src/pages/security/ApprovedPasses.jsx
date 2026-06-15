@@ -7,14 +7,14 @@ import Badge from '../../components/Badge';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ConfirmModal from '../../components/ConfirmModal';
 import { formatTableDate, formatTime12h } from '../../utils/dateFormat';
+import usePageTitle from '../../hooks/usePageTitle';
 
 function ApprovedPasses() {
     const [passes,  setPasses]  = useState([]);
     const [loading, setLoading] = useState(true);
     const [search,  setSearch]  = useState('');
-    // modal now needs an "action" — 'exit' or 'return'
     const [modal, setModal] = useState({ open: false, pass: null, action: null });
-
+    usePageTitle('Approved Passes');
     useEffect(() => {
         load();
     }, []);
@@ -22,7 +22,8 @@ function ApprovedPasses() {
     async function load() {
         setLoading(true);
         try {
-            const data = await securityApi.getApproved();
+            // Backend now only returns passes needing action
+            const data = await securityApi.getActionable();
             setPasses(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
         } catch {
             toast.error('Failed to load approved passes.');
@@ -63,14 +64,11 @@ function ApprovedPasses() {
         }
     }
 
-    // ── Determine the action for a row ────────────────────
-    // Never exited yet → can mark exit
-    // Currently out → can mark return
-    // Completed (exited and returned) → no action
+    // Since backend only returns actionable passes:
+    // exit_status === 'In'  → hasn't exited yet → Mark Exit
+    // exit_status === 'Out' → currently out      → Mark Return
     function getRowAction(p) {
-        if (p.exit_status === 'Out') return 'return';
-        if (p.exit_status === 'In' && !p.actual_return_time) return 'exit';
-        return null; // completed cycle
+        return p.exit_status === 'Out' ? 'return' : 'exit';
     }
 
     if (loading) return <LoadingSpinner text="Loading approved passes..." />;
@@ -78,6 +76,10 @@ function ApprovedPasses() {
     return (
         <div className="space-y-4">
             <h1 className="text-xl font-bold text-gray-800">✅ Approved Gate Passes</h1>
+            <p className="text-xs text-gray-400 -mt-2">
+                Showing passes that need exit or return action.
+                Completed passes are in <span className="font-semibold">History</span>.
+            </p>
 
             {/* Search */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4
@@ -102,8 +104,8 @@ function ApprovedPasses() {
                             overflow-x-auto">
                 {filtered.length === 0 ? (
                     <div className="text-center py-12 text-gray-400">
-                        <p className="text-3xl mb-2">📭</p>
-                        <p className="text-sm">No approved gate passes found.</p>
+                        <p className="text-3xl mb-2">✅</p>
+                        <p className="text-sm">No pending actions. All caught up!</p>
                     </div>
                 ) : (
                     <table className="w-full text-sm">
@@ -141,7 +143,7 @@ function ApprovedPasses() {
                                         </td>
                                         <td className="px-3 py-3"><Badge status={p.exit_status} /></td>
                                         <td className="px-3 py-3">
-                                            {action === 'exit' && (
+                                            {action === 'exit' ? (
                                                 <button
                                                     onClick={() => openModal(p, 'exit')}
                                                     className="bg-orange-500 text-white text-xs
@@ -151,8 +153,7 @@ function ApprovedPasses() {
                                                 >
                                                     🚶 Mark Exit
                                                 </button>
-                                            )}
-                                            {action === 'return' && (
+                                            ) : (
                                                 <button
                                                     onClick={() => openModal(p, 'return')}
                                                     className="bg-green-600 text-white text-xs
@@ -162,11 +163,6 @@ function ApprovedPasses() {
                                                 >
                                                     🏠 Mark Return
                                                 </button>
-                                            )}
-                                            {action === null && (
-                                                <span className="text-xs text-gray-400 font-medium">
-                                                    ✅ Completed
-                                                </span>
                                             )}
                                         </td>
                                     </tr>

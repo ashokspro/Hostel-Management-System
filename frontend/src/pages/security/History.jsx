@@ -1,19 +1,17 @@
-// src/pages/warden/AllGatePasses.jsx
+// src/pages/security/History.jsx
 
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import wardenApi from '../../api/wardenApi';
-import Badge from '../../components/Badge';
+import securityApi from '../../api/securityApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { formatTableDate, formatTime12h } from '../../utils/dateFormat';
+import { formatTableDate, formatTime12h, formatDateTime12h } from '../../utils/dateFormat';
 import usePageTitle from '../../hooks/usePageTitle';
 
-function AllGatePasses() {
+function History() {
     const [passes,  setPasses]  = useState([]);
     const [loading, setLoading] = useState(true);
     const [search,  setSearch]  = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    usePageTitle('All Gate Passes');
+    usePageTitle('History')
     useEffect(() => {
         load();
     }, []);
@@ -21,56 +19,43 @@ function AllGatePasses() {
     async function load() {
         setLoading(true);
         try {
-            const data = await wardenApi.getAllGatePasses();
-            setPasses(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+            const data = await securityApi.getHistory();
+            setPasses(data);
         } catch {
-            toast.error('Failed to load gate passes.');
+            toast.error('Failed to load history.');
         } finally {
             setLoading(false);
         }
     }
 
-    // ── Client-side filtering ────────────────────────────
-    const filtered = passes.filter(p => {
-        const matchesSearch = !search ||
-            p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
-            p.student_id?.toLowerCase().includes(search.toLowerCase()) ||
-            p.going_place?.toLowerCase().includes(search.toLowerCase());
+    const filtered = passes.filter(p =>
+        !search ||
+        p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.student_id?.toLowerCase().includes(search.toLowerCase()) ||
+        p.room_no?.toLowerCase().includes(search.toLowerCase())
+    );
 
-        const matchesStatus = !statusFilter || p.status === statusFilter;
-
-        return matchesSearch && matchesStatus;
-    });
-
-    if (loading) return <LoadingSpinner text="Loading gate passes..." />;
+    if (loading) return <LoadingSpinner text="Loading history..." />;
 
     return (
         <div className="space-y-4">
-            <h1 className="text-xl font-bold text-gray-800">📋 All Gate Passes</h1>
+            <h1 className="text-xl font-bold text-gray-800">📜 Completed History</h1>
+            <p className="text-xs text-gray-400 -mt-2">
+                Students who have exited and returned successfully.
+            </p>
 
-            {/* Filters */}
+            {/* Search */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4
                             flex flex-wrap gap-3 items-center">
                 <input
                     type="text"
-                    placeholder="🔍 Search by student, ID, destination..."
+                    placeholder="🔍 Search by student, ID, or room..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="flex-1 min-w-[200px] border-2 border-gray-200 rounded-lg
                               px-3 py-2 text-sm focus:border-blue-600 focus:outline-none
                               bg-gray-50"
                 />
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm
-                              focus:border-blue-600 focus:outline-none bg-gray-50"
-                >
-                    <option value="">All Status</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
                 <button onClick={load}
                     className="text-xs text-blue-700 font-semibold hover:underline">
                     🔄 Refresh
@@ -83,7 +68,7 @@ function AllGatePasses() {
                 {filtered.length === 0 ? (
                     <div className="text-center py-12 text-gray-400">
                         <p className="text-3xl mb-2">📭</p>
-                        <p className="text-sm">No gate passes found.</p>
+                        <p className="text-sm">No completed gate passes yet.</p>
                     </div>
                 ) : (
                     <table className="w-full text-sm">
@@ -92,12 +77,11 @@ function AllGatePasses() {
                                            border-b border-gray-100">
                                 <th className="px-5 py-3">Student</th>
                                 <th className="px-3 py-3">Pass #</th>
-                                <th className="px-3 py-3">Reason</th>
                                 <th className="px-3 py-3">Destination</th>
-                                <th className="px-3 py-3">Out</th>
-                                <th className="px-3 py-3">Return</th>
-                                <th className="px-3 py-3">Status</th>
-                                <th className="px-3 py-3">Exit</th>
+                                <th className="px-3 py-3">Planned Out</th>
+                                <th className="px-3 py-3">Planned Return</th>
+                                <th className="px-3 py-3">Actual Exit</th>
+                                <th className="px-3 py-3">Actual Return</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,9 +95,6 @@ function AllGatePasses() {
                                     <td className="px-3 py-3 font-mono text-xs text-gray-500">
                                         {p.pass_number || '—'}
                                     </td>
-                                    <td className="px-3 py-3 max-w-[140px] truncate" title={p.reason}>
-                                        {p.reason}
-                                    </td>
                                     <td className="px-3 py-3">{p.going_place}</td>
                                     <td className="px-3 py-3 whitespace-nowrap text-xs">
                                         {formatTableDate(p.out_date)}<br/>{formatTime12h(p.out_time)}
@@ -121,8 +102,12 @@ function AllGatePasses() {
                                     <td className="px-3 py-3 whitespace-nowrap text-xs">
                                         {formatTableDate(p.return_date)}<br/>{formatTime12h(p.return_time)}
                                     </td>
-                                    <td className="px-3 py-3"><Badge status={p.status} /></td>
-                                    <td className="px-3 py-3"><Badge status={p.exit_status} /></td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-xs">
+                                        {formatDateTime12h(p.actual_out_time)}
+                                    </td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-xs">
+                                        {formatDateTime12h(p.actual_return_time)}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -133,4 +118,4 @@ function AllGatePasses() {
     );
 }
 
-export default AllGatePasses;
+export default History;

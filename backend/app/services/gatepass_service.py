@@ -208,6 +208,7 @@ class GatePassService:
         gatepass.security_remarks = security_data.security_remarks
 
         return await GatePassRepository.update(db, gatepass)
+    
 
     @staticmethod
     async def mark_return(
@@ -269,3 +270,21 @@ class GatePassService:
     @staticmethod
     async def get_currently_out(db: AsyncSession) -> list[GatePass]:
         return await GatePassRepository.get_currently_out(db)
+    
+    @staticmethod
+    async def get_completed_passes(db: AsyncSession) -> list[GatePass]:
+        """
+        Returns approved passes where the student has completed
+        the full cycle: exited AND returned.
+        """
+        return await GatePassRepository.get_completed(db)
+    
+
+    @staticmethod
+    async def get_actionable_passes(db: AsyncSession) -> list[GatePass]:
+        """
+        Returns approved passes that still need security action —
+        either haven't exited yet, or are currently out.
+        Excludes completed (exited and returned) passes.
+        """
+        return await GatePassRepository.get_actionable(db)

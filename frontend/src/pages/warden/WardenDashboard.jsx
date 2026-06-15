@@ -9,14 +9,14 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import Badge from '../../components/Badge';
 import useAuth from '../../hooks/useAuth';
 import { formatTableDate, formatTime12h } from '../../utils/dateFormat';
-
+import usePageTitle from '../../hooks/usePageTitle';
 function WardenDashboard() {
     const { user } = useAuth();
     const [pending, setPending] = useState([]);
     const [allPasses, setAllPasses] = useState([]);
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    usePageTitle('Warden Dashboard');
     useEffect(() => {
         loadAll();
     }, []);

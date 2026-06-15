@@ -162,4 +162,14 @@ class UserRepository:
             .where(User.user_type == user_type)
             .order_by(User.name)
         )
+
+    
         return list(result.scalars().all())
+    
+    @staticmethod
+    async def get_by_reset_token_hash(db: AsyncSession, token_hash: str) -> User | None:
+        """Finds a user by their stored reset token hash."""
+        result = await db.execute(
+            select(User).where(User.reset_token_hash == token_hash)
+        )
+        return result.scalar_one_or_none()

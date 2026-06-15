@@ -1,7 +1,7 @@
 // src/components/Navbar.jsx
 
 import useAuth from '../hooks/useAuth';
-
+import { Link } from 'react-router-dom';
 // onMenuClick — toggles sidebar on mobile (used in Phase 4 responsive behavior)
 function Navbar({ onMenuClick }) {
     const { user, logout, userType } = useAuth();
@@ -47,6 +47,17 @@ function Navbar({ onMenuClick }) {
                     </span>
                 </div>
 
+                
+
+
+<Link
+    to="/account/change-password"
+    className="text-xs text-gray-500 font-semibold hover:text-blue-700
+              hover:underline hidden sm:block"
+>
+    🔑 Change Password
+</Link>
+
                 <button
                     onClick={handleLogout}
                     className="bg-red-500 text-white text-sm font-semibold
@@ -54,7 +65,6 @@ function Navbar({ onMenuClick }) {
                                transition-colors flex items-center gap-1.5"
                 >
                     <span className="hidden sm:inline">Logout</span>
-                    <span>🚪</span>
                 </button>
             </div>
         </header>

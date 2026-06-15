@@ -19,17 +19,19 @@ const navConfig = {
         { label: 'Students',         path: '/warden/students',         icon: '🎓' },
     ],
     security: [
-        { label: 'Dashboard',       path: '/security/dashboard',  icon: '🏠' },
-        { label: 'Approved Passes', path: '/security/approved',   icon: '✅' },
-        { label: 'Currently Out',   path: '/security/out',        icon: '🚶' },
-    ],
+    { label: 'Dashboard',       path: '/security/dashboard',  icon: '🏠' },
+    { label: 'Approved Passes', path: '/security/approved',   icon: '✅' },
+    { label: 'Currently Out',   path: '/security/out',        icon: '🚶' },
+    { label: 'History',         path: '/security/history',    icon: '📜' },
+],
     admin: [
-        { label: 'Dashboard',  path: '/admin/dashboard', icon: '🏠' },
-        { label: 'Students',   path: '/admin/students',  icon: '🎓' },
-        { label: 'Wardens',    path: '/admin/wardens',   icon: '🛡️' },
-        { label: 'Security',   path: '/admin/security',  icon: '👮' },
-        { label: 'Create User',path: '/admin/create',    icon: '➕' },
-    ],
+    { label: 'Dashboard',  path: '/admin/dashboard', icon: '🏠' },
+    { label: 'Students',   path: '/admin/students',  icon: '🎓' },
+    { label: 'Wardens',    path: '/admin/wardens',   icon: '🛡️' },
+    { label: 'Security',   path: '/admin/security',  icon: '👮' },
+    { label: 'Admins',     path: '/admin/admins',    icon: '⚙️' },
+    { label: 'Create User',path: '/admin/create',    icon: '➕' },
+],
 };
 
 // isOpen / onClose — control mobile slide-in behavior

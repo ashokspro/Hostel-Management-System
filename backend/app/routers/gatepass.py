@@ -43,3 +43,4 @@ async def download_gatepass_pdf(
             "Content-Disposition": f"attachment; filename=gatepass_{gatepass.pass_number}.pdf"
         }
     )
+

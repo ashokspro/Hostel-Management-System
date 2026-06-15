@@ -12,7 +12,32 @@ const authApi = {
             password
         });
         return response.data;
-    }
+    },
+
+    async forgotPassword(email) {
+    const res = await axiosInstance.post('/api/auth/forgot-password', { email });
+    return res.data;
+},
+
+async resetPassword(token, newPassword) {
+    const res = await axiosInstance.post('/api/auth/reset-password', {
+        token,
+        new_password: newPassword,
+    });
+    return res.data;
+},
+
+async changePassword(currentPassword, newPassword) {
+    const res = await axiosInstance.put('/api/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+    });
+    return res.data;
+},
+
+    
 };
+
+
 
 export default authApi;

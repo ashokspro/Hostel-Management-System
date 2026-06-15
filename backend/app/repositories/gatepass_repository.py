@@ -142,3 +142,36 @@ class GatePassRepository:
         await db.commit()
         await db.refresh(gatepass)
         return gatepass
+    
+    @staticmethod
+    async def get_completed(db: AsyncSession) -> list[GatePass]:
+        """
+        Fetch passes where exit_status is IN (back home)
+        AND actual_return_time is set (meaning they actually went out and returned).
+        """
+        result = await db.execute(
+            select(GatePass)
+            .where(
+                GatePass.status == GatePassStatus.APPROVED.value,
+                GatePass.exit_status == ExitStatus.IN.value,
+                GatePass.actual_return_time.isnot(None)
+            )
+            .order_by(GatePass.actual_return_time.desc())
+        )
+        return list(result.scalars().all())
+    
+    @staticmethod
+    async def get_actionable(db: AsyncSession) -> list[GatePass]:
+        """
+        Approved passes needing action: not yet exited, or currently out.
+        Excludes passes where actual_return_time is already set.
+        """
+        result = await db.execute(
+            select(GatePass)
+            .where(
+                GatePass.status == GatePassStatus.APPROVED.value,
+                GatePass.actual_return_time.is_(None)
+            )
+            .order_by(GatePass.created_at.desc())
+        )
+        return list(result.scalars().all())

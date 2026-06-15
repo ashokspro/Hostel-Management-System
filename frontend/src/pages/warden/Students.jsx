@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import wardenApi from '../../api/wardenApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import usePageTitle from '../../hooks/usePageTitle';
+
 
 const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 
@@ -17,7 +19,7 @@ function Students() {
     // Detail modal
     const [selected, setSelected] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
-
+    usePageTitle('Students');
     useEffect(() => {
         load();
     }, []);

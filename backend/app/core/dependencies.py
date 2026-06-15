@@ -121,3 +121,5 @@ CurrentStudent = Annotated[User, Depends(require_role(UserRole.STUDENT))]
 CurrentWarden = Annotated[User, Depends(require_role(UserRole.WARDEN))]
 CurrentSecurity = Annotated[User, Depends(require_role(UserRole.SECURITY))]
 CurrentAdmin = Annotated[User, Depends(require_role(UserRole.ADMIN))]
+# Add this alongside your other role dependencies
+CurrentAdminOrWarden = Annotated[User, Depends(require_role(UserRole.ADMIN, UserRole.WARDEN))]

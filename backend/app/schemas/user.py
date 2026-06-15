@@ -3,6 +3,7 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import Optional
 from datetime import datetime
+import re
 
 from app.core.constants import UserRole
 
@@ -52,6 +53,15 @@ class UserCreate(UserBase):
             raise ValueError("Password must contain at least one number")
         if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
             raise ValueError("Password must contain at least one special character")
+        return v
+    
+    @field_validator("phone", "guardian_phone", "emergency_contact")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return v
+        if not re.fullmatch(r"\d{10}", v):
+            raise ValueError("Phone number must be exactly 10 digits")
         return v
 
 
@@ -112,3 +122,31 @@ class StudentListItem(BaseModel):
     year: Optional[str] = None
     phone: Optional[str] = None
     is_active: bool
+
+class AdminResetPasswordRequest(BaseModel):
+    # If provided, admin sets this exact password (must pass strength check)
+    # If None, system generates a random temporary password
+    new_password: Optional[str] = None
+
+    @field_validator("new_password")
+    @classmethod
+    def password_strength(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+            raise ValueError("Password must contain at least one special character")
+        return v
+
+
+class AdminResetPasswordResponse(BaseModel):
+    message: str
+    # Only populated if admin didn't supply a password — show the generated one
+    temporary_password: Optional[str] = None

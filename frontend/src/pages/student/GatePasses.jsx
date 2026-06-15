@@ -7,6 +7,8 @@ import gatepassApi from '../../api/gatepassApi';
 import Badge from '../../components/Badge';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatTableDate, formatTime12h } from '../../utils/dateFormat';
+import usePageTitle from '../../hooks/usePageTitle';
+
 
 const initialForm = {
     reason: '',
@@ -22,6 +24,7 @@ function GatePasses() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [form, setForm] = useState(initialForm);
+    usePageTitle('Gate Passes');
 
     useEffect(() => {
         loadPasses();
@@ -45,27 +48,50 @@ function GatePasses() {
     }
 
     async function handleSubmit(e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        // Append :00 seconds since backend expects HH:MM:SS time format
-        const payload = {
-            ...form,
-            out_time: form.out_time + ':00',
-            return_time: form.return_time + ':00',
-        };
+    // ── Client-side validation ──────────────────────────────
+    const outDateTime    = new Date(`${form.out_date}T${form.out_time}`);
+    const returnDateTime = new Date(`${form.return_date}T${form.return_time}`);
 
-        setSubmitting(true);
-        try {
-            await studentApi.createGatePass(payload);
-            toast.success('Gate pass request submitted!');
-            setForm(initialForm);
-            loadPasses(); // refresh history
-        } catch (err) {
-            toast.error(err.response?.data?.detail || 'Failed to submit request.');
-        } finally {
-            setSubmitting(false);
-        }
+    if (returnDateTime <= outDateTime) {
+        toast.error('Return date/time must be after the departure date/time.');
+        return;
     }
+
+    const payload = {
+        ...form,
+        out_time: form.out_time + ':00',
+        return_time: form.return_time + ':00',
+    };
+
+    setSubmitting(true);
+    try {
+        await studentApi.createGatePass(payload);
+        toast.success('Gate pass request submitted!');
+        setForm(initialForm);
+        loadPasses();
+    } catch (err) {
+        // ── Robust error extraction ────────────────────────
+        const detail = err.response?.data?.detail;
+        let message = 'Failed to submit request.';
+
+        if (typeof detail === 'string') {
+            // FastAPI HTTPException — plain string
+            message = detail;
+        } else if (Array.isArray(detail)) {
+            // Pydantic validation error — array of {msg, loc, ...}
+            message = detail[0]?.msg || message;
+        } else if (!err.response) {
+            // Network error — no response at all
+            message = 'Cannot connect to server.';
+        }
+
+        toast.error(message);
+    } finally {
+        setSubmitting(false);
+    }
+}
 
     async function handleDownload(passId, passNumber) {
         try {
@@ -209,18 +235,18 @@ function GatePasses() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="text-left text-xs text-gray-400
-                                                       uppercase border-b border-gray-100">
-                                            <th className="px-5 py-3">Pass #</th>
-                                            <th className="px-3 py-3">Reason</th>
-                                            <th className="px-3 py-3">Destination</th>
-                                            <th className="px-3 py-3">Out</th>
-                                            <th className="px-3 py-3">Return</th>
-                                            <th className="px-3 py-3">Status</th>
-                                            <th className="px-3 py-3">Exit</th>
-                                            <th className="px-3 py-3"></th>
-                                        </tr>
-                                    </thead>
+    <tr className="text-left text-xs text-gray-400 uppercase border-b border-gray-100">
+        <th className="px-5 py-3">Pass #</th>
+        <th className="px-3 py-3">Reason</th>
+        <th className="px-3 py-3">Destination</th>
+        <th className="px-3 py-3">Out</th>
+        <th className="px-3 py-3">Return</th>
+        <th className="px-3 py-3">Status</th>
+        <th className="px-3 py-3">Remarks</th>
+        <th className="px-3 py-3">Exit</th>
+        <th className="px-3 py-3"></th>
+    </tr>
+</thead>
                                     <tbody>
                                         {passes.map(p => (
                                             <tr key={p.pass_id} className="border-b
@@ -239,7 +265,27 @@ function GatePasses() {
     {formatTableDate(p.return_date)}<br/>{formatTime12h(p.return_time)}
 </td>
                                                 <td className="px-3 py-3"><Badge status={p.status} /></td>
-                                                <td className="px-3 py-3"><Badge status={p.exit_status} /></td>
+
+{/* ── Remarks column ────────────────────────────────── */}
+<td className="px-3 py-3 max-w-[160px]">
+    {p.remarks ? (
+        <p
+            className={`text-xs leading-snug truncate
+                       ${p.status === 'Rejected'
+                           ? 'text-red-600'
+                           : p.status === 'Approved'
+                               ? 'text-green-700'
+                               : 'text-gray-600'}`}
+            title={p.remarks}
+        >
+            {p.remarks}
+        </p>
+    ) : (
+        <span className="text-xs text-gray-300">—</span>
+    )}
+</td>
+
+<td className="px-3 py-3"><Badge status={p.exit_status} /></td>
                                                 <td className="px-3 py-3">
                                                     {p.status === 'Approved' && (
                                                         <button

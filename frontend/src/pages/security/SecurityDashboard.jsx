@@ -8,31 +8,35 @@ import StatCard from '../../components/StatCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import useAuth from '../../hooks/useAuth';
 import { formatDateTime12h } from '../../utils/dateFormat';
-
+import usePageTitle from '../../hooks/usePageTitle';
 function SecurityDashboard() {
     const { user } = useAuth();
     const [approved, setApproved] = useState([]);
     const [currentlyOut, setCurrentlyOut] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    usePageTitle('Security Dashboard');
     useEffect(() => {
         loadAll();
     }, []);
 
     async function loadAll() {
-        setLoading(true);
-        try {
-            const [approvedData, outData] = await Promise.all([
-                securityApi.getApproved(),
-                securityApi.getCurrentlyOut(),
-            ]);
-            setApproved(approvedData);
-            setCurrentlyOut(outData);
-        } catch {
-            toast.error('Failed to load dashboard data.');
-        } finally {
-            setLoading(false);
-        }
+    setLoading(true);
+    try {
+        const [approvedData, outData] = await Promise.all([
+            securityApi.getActionable(),
+            securityApi.getCurrentlyOut(),
+        ]);
+        setApproved(approvedData);
+        setCurrentlyOut(outData);
+    } catch (err) {
+        console.error('Dashboard load error:', err);          // ← ADD THIS
+        console.error('Response:', err.response?.data);         // ← ADD THIS
+        console.error('Status:', err.response?.status);         // ← ADD THIS
+        toast.error('Failed to load dashboard data.');
+    } finally {
+        setLoading(false);
+    }
     }
 
     if (loading) return <LoadingSpinner text="Loading dashboard..." />;

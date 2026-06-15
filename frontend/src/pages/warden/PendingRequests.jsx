@@ -6,11 +6,11 @@ import wardenApi from '../../api/wardenApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ConfirmModal from '../../components/ConfirmModal';
 import { formatTableDate, formatTime12h } from '../../utils/dateFormat';
-
+import usePageTitle from '../../hooks/usePageTitle';
 function PendingRequests() {
     const [passes,  setPasses]  = useState([]);
     const [loading, setLoading] = useState(true);
-
+    usePageTitle('Pending Requests');
     // modal state — which pass + which action (approve/reject)
     const [modal, setModal] = useState({ open: false, pass: null, action: null });
 

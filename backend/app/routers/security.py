@@ -17,6 +17,21 @@ router = APIRouter(prefix="/api/security", tags=["Security"])
 async def get_approved_gatepasses(db: DB, current_user: CurrentSecurity):
     return await GatePassService.get_approved_passes(db)
 
+@router.get(
+    "/gatepasses/actionable",
+    response_model=list[GatePassResponse],
+    summary="View approved passes needing security action"
+)
+async def get_actionable(db: DB, current_user: CurrentSecurity):
+    return await GatePassService.get_actionable_passes(db)
+
+@router.get(
+    "/gatepasses/history",
+    response_model=list[GatePassResponse],
+    summary="View completed gate pass history (exited and returned)"
+)
+async def get_history(db: DB, current_user: CurrentSecurity):
+    return await GatePassService.get_completed_passes(db)
 
 @router.get(
     "/gatepasses/out",              # ← static, must be BEFORE /{pass_id}

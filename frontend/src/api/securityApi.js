@@ -3,15 +3,21 @@
 import axiosInstance from './axiosInstance';
 
 const securityApi = {
-    // GET /api/security/gatepasses — all approved passes
-    async getApproved() {
-        const res = await axiosInstance.get('/api/security/gatepasses');
+    // GET /api/security/gatepasses/actionable — needs exit or return action
+    async getActionable() {
+        const res = await axiosInstance.get('/api/security/gatepasses/actionable');
         return res.data;
     },
 
     // GET /api/security/gatepasses/out — students currently outside
     async getCurrentlyOut() {
         const res = await axiosInstance.get('/api/security/gatepasses/out');
+        return res.data;
+    },
+
+    // GET /api/security/gatepasses/history — completed (exited + returned)
+    async getHistory() {
+        const res = await axiosInstance.get('/api/security/gatepasses/history');
         return res.data;
     },
 

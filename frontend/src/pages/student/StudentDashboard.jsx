@@ -8,13 +8,14 @@ import StatCard from '../../components/StatCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import useAuth from '../../hooks/useAuth';
 import { formatDateTime12h, formatDashboardDate, formatTableDate } from '../../utils/dateFormat';
+import usePageTitle from '../../hooks/usePageTitle';
 
 
 function StudentDashboard() {
     const { user } = useAuth();
     const [passes,  setPasses]  = useState([]);
     const [loading, setLoading] = useState(true);
-
+    usePageTitle('Dashboard');
     useEffect(() => {
         loadPasses();
     }, []);
@@ -119,13 +120,20 @@ function StudentDashboard() {
                             <div key={p.pass_id} className="px-5 py-3 flex items-center
                                        justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-gray-800 truncate">
-                                        {p.reason}
-                                    </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
-    {p.going_place} · {formatTableDate(p.out_date)}
-</p>
-                                </div>
+    <p className="text-sm font-medium text-gray-800 truncate">
+        {p.reason}
+    </p>
+    <p className="text-xs text-gray-400 mt-0.5">
+        {p.going_place} · {formatTableDate(p.out_date)}
+    </p>
+    {p.remarks && (
+        <p className={`text-xs mt-0.5 truncate
+                       ${p.status === 'Rejected' ? 'text-red-500' : 'text-green-600'}`}
+           title={p.remarks}>
+            {p.status === 'Rejected' ? 'Reason: ' : 'Note: '}{p.remarks}
+        </p>
+    )}
+</div>
                                 <span className={`text-xs font-semibold px-2.5 py-1
                                                 rounded-full whitespace-nowrap
                                                 ${p.status === 'Approved' ? 'bg-green-100 text-green-800'

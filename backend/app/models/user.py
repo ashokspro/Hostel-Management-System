@@ -52,7 +52,12 @@ class User(Base):
     role: Mapped[str | None] = mapped_column(String(50), nullable=True)
     department: Mapped[str | None] = mapped_column(String(100), nullable=True)
     emergency_contact: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    
 
+    # ── Password reset ──────────────────────────────────────
+    reset_token_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    reset_token_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    
     # ── Relationships ─────────────────────────────────────────
     gate_passes: Mapped[list["GatePass"]] = relationship(
         "GatePass",
