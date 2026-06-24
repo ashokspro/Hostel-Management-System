@@ -5,25 +5,34 @@ import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import studentApi from '../../api/studentApi';
 import StatCard from '../../components/StatCard';
+import ActivityOverviewTable from '../../components/ActivityOverviewTable';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import useAuth from '../../hooks/useAuth';
-import { formatDateTime12h, formatDashboardDate, formatTableDate } from '../../utils/dateFormat';
+import { formatDateTime12h, formatTableDate } from '../../utils/dateFormat';
 import usePageTitle from '../../hooks/usePageTitle';
 
-
 function StudentDashboard() {
+    usePageTitle('Dashboard');
+
     const { user } = useAuth();
     const [passes,  setPasses]  = useState([]);
+    const [stats,   setStats]   = useState(null);
     const [loading, setLoading] = useState(true);
-    usePageTitle('Dashboard');
+
     useEffect(() => {
-        loadPasses();
+        loadAll();
+        const interval = setInterval(loadAll, 60000);
+        return () => clearInterval(interval);
     }, []);
 
-    async function loadPasses() {
+    async function loadAll() {
         try {
-            const data = await studentApi.getGatePasses();
-            setPasses(data);
+            const [passesData, statsData] = await Promise.all([
+                studentApi.getGatePasses(),
+                studentApi.getStats(),
+            ]);
+            setPasses(passesData);
+            setStats(statsData);
         } catch {
             toast.error('Failed to load dashboard data.');
         } finally {
@@ -31,26 +40,26 @@ function StudentDashboard() {
         }
     }
 
-    if (loading) return <LoadingSpinner text="Loading dashboard..." />;
+    if (loading || !stats) return <LoadingSpinner text="Loading dashboard..." />;
 
-    // ── Derived stats ─────────────────────────────────────
-    const total    = passes.length;
-    const approved = passes.filter(p => p.status === 'Approved').length;
-    const pending  = passes.filter(p => p.status === 'Pending').length;
-    const rejected = passes.filter(p => p.status === 'Rejected').length;
-
-    // Is the student currently outside the hostel?
+    const { live } = stats;
     const currentlyOut = passes.find(
         p => p.status === 'Approved' && p.exit_status === 'Out'
     );
 
+    const columns = [
+        { key: 'requests_made',    label: 'Requests Made', color: 'blue' },
+        { key: 'approved',         label: 'Approved',      color: 'green' },
+        { key: 'rejected',         label: 'Rejected',      color: 'red' },
+        { key: 'trips_completed',  label: 'Trips Completed', color: 'purple' },
+    ];
+
     return (
         <div className="space-y-6">
 
-            {/* Welcome */}
             <div>
                 <h1 className="text-xl font-bold text-gray-800">
-                    Welcome back, {user?.name?.split(' ')[0] || 'Student'} 👋
+                    Welcome back, {user?.name?.split(' ')[0] || 'Student'}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
                     Room {user?.room || '—'} · {user?.course || '—'} · {user?.year || '—'}
@@ -58,32 +67,41 @@ function StudentDashboard() {
             </div>
 
             {/* Current status banner */}
-<div className={`rounded-xl border-2 p-4 flex items-center gap-3
-                ${currentlyOut
-                    ? 'bg-orange-50 border-orange-200'
-                    : 'bg-green-50 border-green-200'}`}>
-    <div className="text-3xl">{currentlyOut ? '🚶' : '🏠'}</div>
-    <div>
-        <p className={`text-sm font-bold
-                      ${currentlyOut ? 'text-orange-800' : 'text-green-800'}`}>
-            {currentlyOut ? 'Currently Out of Hostel' : 'Currently In Hostel'}
-        </p>
-        {currentlyOut && (
-            <p className="text-xs text-orange-600 mt-0.5">
-                Out since {formatDateTime12h(currentlyOut.actual_out_time)}
-                {' · '}Expected return: {formatDateTime12h(currentlyOut.return_date, currentlyOut.return_time)}
-            </p>
-        )}
-    </div>
-</div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon="🪪" label="Total Passes" value={total}    color="blue" />
-                <StatCard icon="✅" label="Approved"      value={approved} color="green" />
-                <StatCard icon="⏳" label="Pending"       value={pending}  color="yellow" />
-                <StatCard icon="❌" label="Rejected"      value={rejected} color="red" />
+            <div className={`rounded-xl border-2 p-4 flex items-center gap-3
+                            ${live.currently_out
+                                ? 'bg-orange-50 border-orange-200'
+                                : 'bg-green-50 border-green-200'}`}>
+                <div className="text-3xl">{live.currently_out ? '🚶' : '🏠'}</div>
+                <div>
+                    <p className={`text-sm font-bold
+                                  ${live.currently_out ? 'text-orange-800' : 'text-green-800'}`}>
+                        {live.currently_out ? 'Currently Out of Hostel' : 'Currently In Hostel'}
+                    </p>
+                    {live.currently_out && currentlyOut && (
+                        <p className="text-xs text-orange-600 mt-0.5">
+                            Out since {formatDateTime12h(currentlyOut.actual_out_time)}
+                            {' · '}Expected return: {formatDateTime12h(currentlyOut.return_date, currentlyOut.return_time)}
+                        </p>
+                    )}
+                </div>
             </div>
+
+            {/* Live stats */}
+            <div>
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-gray-700">Live Status</h2>
+                    <span className="text-xs text-gray-400">Auto-refreshes every minute</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatCard icon="🪪" label="Total Passes" value={live.total}    color="blue" />
+                    <StatCard icon="✅" label="Approved"      value={live.approved} color="green" />
+                    <StatCard icon="⏳" label="Pending"       value={live.pending}  color="yellow" />
+                    <StatCard icon="❌" label="Rejected"      value={live.rejected} color="red" />
+                </div>
+            </div>
+
+            {/* Activity overview */}
+            <ActivityOverviewTable columns={columns} stats={stats} />
 
             {/* Quick action */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5
@@ -120,20 +138,13 @@ function StudentDashboard() {
                             <div key={p.pass_id} className="px-5 py-3 flex items-center
                                        justify-between gap-3">
                                 <div className="min-w-0">
-    <p className="text-sm font-medium text-gray-800 truncate">
-        {p.reason}
-    </p>
-    <p className="text-xs text-gray-400 mt-0.5">
-        {p.going_place} · {formatTableDate(p.out_date)}
-    </p>
-    {p.remarks && (
-        <p className={`text-xs mt-0.5 truncate
-                       ${p.status === 'Rejected' ? 'text-red-500' : 'text-green-600'}`}
-           title={p.remarks}>
-            {p.status === 'Rejected' ? 'Reason: ' : 'Note: '}{p.remarks}
-        </p>
-    )}
-</div>
+                                    <p className="text-sm font-medium text-gray-800 truncate">
+                                        {p.reason}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                        {p.going_place} · {formatTableDate(p.out_date)}
+                                    </p>
+                                </div>
                                 <span className={`text-xs font-semibold px-2.5 py-1
                                                 rounded-full whitespace-nowrap
                                                 ${p.status === 'Approved' ? 'bg-green-100 text-green-800'

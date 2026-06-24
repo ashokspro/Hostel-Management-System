@@ -62,3 +62,13 @@ async def reject(
     return await GatePassService.approve_or_reject(
         db, pass_id, current_user.id, approval_data
     )
+
+from app.schemas.gatepass import WardenStatsResponse
+
+@router.get(
+    "/gatepasses/stats",
+    response_model=WardenStatsResponse,
+    summary="Dashboard statistics — live status + Today/Week/Month/Overall activity"
+)
+async def get_stats(db: DB, current_user: CurrentWarden):
+    return await GatePassService.get_warden_stats(db)

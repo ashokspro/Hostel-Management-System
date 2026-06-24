@@ -128,3 +128,65 @@ class GatePassListItem(BaseModel):
             data.student_name = data.student.name
             data.room_no = data.student.room
         return data
+    
+class PeriodStats(BaseModel):
+    gate_passes: int   # gate pass requests created in this period
+    exits: int         # students marked exited in this period
+    returns: int       # students marked returned in this period
+
+
+class LiveStats(BaseModel):
+    total_approved: int   # unique students with an approved pass
+    inside: int           # unique students currently inside
+    out: int              # unique students currently outside
+    overdue: int          # unique students past their expected return time
+
+
+class SecurityStatsResponse(BaseModel):
+    live: LiveStats
+    today: PeriodStats
+    week: PeriodStats
+    month: PeriodStats
+    overall: PeriodStats
+
+class StudentPeriodStats(BaseModel):
+    requests_made: int
+    approved: int
+    rejected: int
+    trips_completed: int
+
+
+class StudentLiveStats(BaseModel):
+    total: int
+    approved: int
+    pending: int
+    rejected: int
+    currently_out: bool
+
+
+class StudentStatsResponse(BaseModel):
+    live: StudentLiveStats
+    today: StudentPeriodStats
+    week: StudentPeriodStats
+    month: StudentPeriodStats
+    overall: StudentPeriodStats
+
+class WardenPeriodStats(BaseModel):
+    requests_received: int
+    approved: int
+    rejected: int
+
+
+class WardenLiveStats(BaseModel):
+    pending_requests: int
+    total_approved: int
+    currently_out: int
+    total_students: int
+
+
+class WardenStatsResponse(BaseModel):
+    live: WardenLiveStats
+    today: WardenPeriodStats
+    week: WardenPeriodStats
+    month: WardenPeriodStats
+    overall: WardenPeriodStats

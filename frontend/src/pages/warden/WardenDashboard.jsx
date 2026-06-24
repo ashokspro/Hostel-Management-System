@@ -5,33 +5,35 @@ import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import wardenApi from '../../api/wardenApi';
 import StatCard from '../../components/StatCard';
+import ActivityOverviewTable from '../../components/ActivityOverviewTable';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Badge from '../../components/Badge';
 import useAuth from '../../hooks/useAuth';
 import { formatTableDate, formatTime12h } from '../../utils/dateFormat';
 import usePageTitle from '../../hooks/usePageTitle';
+
 function WardenDashboard() {
-    const { user } = useAuth();
-    const [pending, setPending] = useState([]);
-    const [allPasses, setAllPasses] = useState([]);
-    const [students, setStudents] = useState([]);
-    const [loading, setLoading] = useState(true);
     usePageTitle('Warden Dashboard');
+
+    const { user } = useAuth();
+    const [stats, setStats] = useState(null);
+    const [allPasses, setAllPasses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadAll();
+        const interval = setInterval(loadAll, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     async function loadAll() {
-        setLoading(true);
         try {
-            const [pendingData, allData, studentsData] = await Promise.all([
-                wardenApi.getPending(),
+            const [statsData, allData] = await Promise.all([
+                wardenApi.getStats(),
                 wardenApi.getAllGatePasses(),
-                wardenApi.getStudents(),
             ]);
-            setPending(pendingData);
+            setStats(statsData);
             setAllPasses(allData);
-            setStudents(studentsData);
         } catch {
             toast.error('Failed to load dashboard data.');
         } finally {
@@ -39,42 +41,51 @@ function WardenDashboard() {
         }
     }
 
-    if (loading) return <LoadingSpinner text="Loading dashboard..." />;
+    if (loading || !stats) return <LoadingSpinner text="Loading dashboard..." />;
 
-    // ── Derived stats ─────────────────────────────────────
-    const totalApproved = allPasses.filter(p => p.status === 'Approved').length;
-    const currentlyOut  = allPasses.filter(p => p.status === 'Approved' && p.exit_status === 'Out').length;
-    const totalStudents = students.length;
+    const { live } = stats;
+
+    const columns = [
+        { key: 'requests_received', label: 'Requests Received', color: 'blue' },
+        { key: 'approved',          label: 'Approved',          color: 'green' },
+        { key: 'rejected',          label: 'Rejected',          color: 'red' },
+    ];
 
     return (
         <div className="space-y-6">
 
             <div>
                 <h1 className="text-xl font-bold text-gray-800">
-                    Welcome back, {user?.name?.split(' ')[0] || 'Warden'} 👋
+                    Welcome back, {user?.name?.split(' ')[0] || 'Warden'}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
                     Here's what's happening in the hostel today.
                 </p>
             </div>
 
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon="⏳" label="Pending Requests" value={pending.length} color="yellow" />
-                <StatCard icon="✅" label="Total Approved"   value={totalApproved}  color="green" />
-                <StatCard icon="🚶" label="Currently Out"    value={currentlyOut}   color="red" />
-                <StatCard icon="🎓" label="Total Students"   value={totalStudents}  color="blue" />
+            {/* Live stats */}
+            <div>
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-gray-700">Live Status</h2>
+                    <span className="text-xs text-gray-400">Auto-refreshes every minute</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatCard icon="⏳" label="Pending Requests" value={live.pending_requests} color="yellow" />
+                    <StatCard icon="✅" label="Total Approved"   value={live.total_approved}    color="green" />
+                    <StatCard icon="🚶" label="Currently Out"    value={live.currently_out}     color="red" />
+                    <StatCard icon="🎓" label="Total Students"   value={live.total_students}    color="blue" />
+                </div>
             </div>
 
-            {/* Quick action — pending alert */}
-            {pending.length > 0 && (
+            {/* Pending alert */}
+            {live.pending_requests > 0 && (
                 <div className="bg-orange-50 border-2 border-orange-200 rounded-xl
                                 p-4 flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
                         <span className="text-3xl">⏳</span>
                         <div>
                             <p className="text-sm font-bold text-orange-800">
-                                {pending.length} request{pending.length > 1 ? 's' : ''} awaiting your approval
+                                {live.pending_requests} request{live.pending_requests > 1 ? 's' : ''} awaiting your approval
                             </p>
                             <p className="text-xs text-orange-600 mt-0.5">
                                 Students are waiting for a response.
@@ -89,6 +100,9 @@ function WardenDashboard() {
                     </Link>
                 </div>
             )}
+
+            {/* Activity overview */}
+            <ActivityOverviewTable columns={columns} stats={stats} />
 
             {/* Recent gate passes */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">

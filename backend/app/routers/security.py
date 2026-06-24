@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.core.dependencies import DB, CurrentSecurity
 from app.schemas.gatepass import GatePassResponse, SecurityAction
 from app.services.gatepass_service import GatePassService
+from app.schemas.gatepass import SecurityStatsResponse
 
 router = APIRouter(prefix="/api/security", tags=["Security"])
 
@@ -41,7 +42,13 @@ async def get_history(db: DB, current_user: CurrentSecurity):
 async def get_currently_out(db: DB, current_user: CurrentSecurity):
     return await GatePassService.get_currently_out(db)
 
-
+@router.get(
+    "/gatepasses/stats",
+    response_model=SecurityStatsResponse,
+    summary="Dashboard statistics — live counts + Today/Week/Month/Overall activity"
+)
+async def get_stats(db: DB, current_user: CurrentSecurity):
+    return await GatePassService.get_security_stats(db)
 # ── Dynamic routes AFTER ──────────────────────────────────────
 @router.put(
     "/gatepasses/{pass_id}/exit",

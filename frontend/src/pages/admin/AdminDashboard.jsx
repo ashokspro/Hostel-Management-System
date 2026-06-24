@@ -5,32 +5,33 @@ import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import adminApi from '../../api/adminApi';
 import StatCard from '../../components/StatCard';
+import ActivityOverviewTable from '../../components/ActivityOverviewTable';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 
 function AdminDashboard() {
-    const { user } = useAuth();
-    const [students, setStudents] = useState([]);
-    const [wardens,  setWardens]  = useState([]);
-    const [security, setSecurity] = useState([]);
-    const [loading,  setLoading]  = useState(true);
     usePageTitle('Admin Dashboard');
+
+    const { user } = useAuth();
+    const [stats, setStats] = useState(null);
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadAll();
+        const interval = setInterval(loadAll, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     async function loadAll() {
-        setLoading(true);
         try {
-            const [studentsData, wardensData, securityData] = await Promise.all([
+            const [statsData, studentsData] = await Promise.all([
+                adminApi.getStats(),
                 adminApi.getStudents(),
-                adminApi.getWardens(),
-                adminApi.getSecurity(),
             ]);
+            setStats(statsData);
             setStudents(studentsData);
-            setWardens(wardensData);
-            setSecurity(securityData);
         } catch {
             toast.error('Failed to load dashboard data.');
         } finally {
@@ -38,30 +39,48 @@ function AdminDashboard() {
         }
     }
 
-    if (loading) return <LoadingSpinner text="Loading dashboard..." />;
+    if (loading || !stats) return <LoadingSpinner text="Loading dashboard..." />;
 
-    const activeStudents = students.filter(s => s.is_active).length;
-    const activeWardens  = wardens.filter(w => w.is_active).length;
-    const activeSecurity = security.filter(s => s.is_active).length;
+    const { live } = stats;
+
+    const columns = [
+        { key: 'new_students', label: 'New Students', color: 'blue' },
+        { key: 'new_wardens',  label: 'New Wardens',  color: 'green' },
+        { key: 'new_security', label: 'New Security', color: 'orange' },
+        { key: 'new_admins',   label: 'New Admins',   color: 'purple' },
+    ];
 
     return (
         <div className="space-y-6">
 
             <div>
                 <h1 className="text-xl font-bold text-gray-800">
-                    Welcome back, {user?.name?.split(' ')[0] || 'Admin'} 👋
+                    Welcome back, {user?.name?.split(' ')[0] || 'Admin'}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
                     System overview and user management.
                 </p>
             </div>
 
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <StatCard icon="🎓" label={`Students (${activeStudents} active)`} value={students.length} color="blue" />
-                <StatCard icon= "🛡️" label={`Wardens (${activeWardens} active)`}   value={wardens.length}  color="green" />
-                <StatCard icon="👮" label={`Security (${activeSecurity} active)`} value={security.length} color="yellow" />
+            {/* Live stats */}
+            <div>
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-gray-700">Live Status</h2>
+                    <span className="text-xs text-gray-400">Auto-refreshes every minute</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatCard icon="🎓" label="Active Students" value={live.active_students} color="blue" />
+                    <StatCard icon="🛡️" label="Active Wardens"  value={live.active_wardens}  color="green" />
+                    <StatCard icon="👮" label="Active Security" value={live.active_security} color="yellow" />
+                    <StatCard icon="⚙️" label="Active Admins"   value={live.active_admins}   color="red" />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                    Total users in system: <span className="font-semibold">{live.total_users}</span>
+                </p>
             </div>
+
+            {/* Activity overview */}
+            <ActivityOverviewTable columns={columns} stats={stats} />
 
             {/* Quick actions */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">

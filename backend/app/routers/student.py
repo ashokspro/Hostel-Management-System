@@ -7,6 +7,7 @@ from app.schemas.user import UserResponse, UserUpdate
 from app.schemas.gatepass import GatePassCreate, GatePassResponse
 from app.services.user_service import UserService
 from app.services.gatepass_service import GatePassService
+from app.schemas.gatepass import StudentStatsResponse
 
 router = APIRouter(prefix="/api/student", tags=["Student"])
 
@@ -64,6 +65,14 @@ async def get_my_gatepasses(
     """Student sees only their own passes."""
     return await GatePassService.get_student_passes(db, current_user.id)
 
+
+@router.get(
+    "/gatepasses/stats",
+    response_model=StudentStatsResponse,
+    summary="Dashboard statistics — live status + Today/Week/Month/Overall activity"
+)
+async def get_stats(db: DB, current_user: CurrentStudent):
+    return await GatePassService.get_student_stats(db, current_user.id)
 
 @router.get(
     "/gatepasses/{pass_id}",

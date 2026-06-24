@@ -10,7 +10,8 @@ from app.repositories.gatepass_repository import GatePassRepository
 from app.repositories.user_repository import UserRepository
 from app.models.gatepass import GatePass
 from app.schemas.gatepass import GatePassCreate, GatePassApproval, SecurityAction
-from app.core.constants import GatePassStatus, ExitStatus
+from app.core.constants import GatePassStatus, ExitStatus, UserRole
+
 
 
 def utcnow() -> datetime:
@@ -288,3 +289,19 @@ class GatePassService:
         Excludes completed (exited and returned) passes.
         """
         return await GatePassRepository.get_actionable(db)
+    
+    @staticmethod
+    async def get_security_stats(db: AsyncSession) -> dict:
+        return await GatePassRepository.get_security_stats(db)
+    
+    @staticmethod
+    async def get_student_stats(db: AsyncSession, student_id: str) -> dict:
+        return await GatePassRepository.get_student_stats(db, student_id)
+    
+    
+
+    @staticmethod
+    async def get_warden_stats(db: AsyncSession) -> dict:
+        stats = await GatePassRepository.get_warden_stats(db)
+        stats["live"]["total_students"] = await UserRepository.count_by_type(db, UserRole.STUDENT.value)
+        return stats

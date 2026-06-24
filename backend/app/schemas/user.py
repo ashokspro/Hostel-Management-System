@@ -150,3 +150,25 @@ class AdminResetPasswordResponse(BaseModel):
     message: str
     # Only populated if admin didn't supply a password — show the generated one
     temporary_password: Optional[str] = None
+
+class AdminPeriodStats(BaseModel):
+    new_students: int
+    new_wardens: int
+    new_security: int
+    new_admins: int
+
+
+class AdminLiveStats(BaseModel):
+    active_students: int
+    active_wardens: int
+    active_security: int
+    active_admins: int
+    total_users: int
+
+
+class AdminStatsResponse(BaseModel):
+    live: AdminLiveStats
+    today: AdminPeriodStats
+    week: AdminPeriodStats
+    month: AdminPeriodStats
+    overall: AdminPeriodStats

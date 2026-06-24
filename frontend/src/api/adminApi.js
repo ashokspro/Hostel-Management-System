@@ -69,6 +69,10 @@ const adminApi = {
     });
     return res.data;
 },
+async getStats() {
+    const res = await axiosInstance.get('/api/admin/stats');
+    return res.data;
+},
 };
 
 export default adminApi;

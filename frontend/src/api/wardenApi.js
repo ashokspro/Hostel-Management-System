@@ -51,6 +51,11 @@ const wardenApi = {
         );
         return res.data;
     },
+
+    async getStats() {
+    const res = await axiosInstance.get('/api/warden/gatepasses/stats');
+    return res.data;
+},
 };
 
 export default wardenApi;

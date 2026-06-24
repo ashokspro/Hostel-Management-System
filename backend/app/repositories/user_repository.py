@@ -1,10 +1,10 @@
 # app/repositories/user_repository.py
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 
 from app.models.user import User
-
+from datetime import datetime, timezone, timedelta
 
 class UserRepository:
     """
@@ -173,3 +173,57 @@ class UserRepository:
             select(User).where(User.reset_token_hash == token_hash)
         )
         return result.scalar_one_or_none()
+    
+    @staticmethod
+    async def count_by_type(db: AsyncSession, user_type: str) -> int:
+        result = await db.scalar(
+            select(func.count(User.id)).where(User.user_type == user_type)
+        )
+        return result or 0
+    
+    @staticmethod
+    async def get_admin_stats(db: AsyncSession) -> dict:
+        now_utc = datetime.now(timezone.utc)
+        today_start = datetime(now_utc.year, now_utc.month, now_utc.day, tzinfo=timezone.utc)
+        week_start  = today_start - timedelta(days=now_utc.weekday())
+        month_start = datetime(now_utc.year, now_utc.month, 1, tzinfo=timezone.utc)
+        epoch       = datetime(2000, 1, 1, tzinfo=timezone.utc)  # "overall" = since epoch
+
+        async def period_stats(start: datetime) -> dict:
+            async def count(role: str) -> int:
+                return await db.scalar(
+                    select(func.count(User.id))
+                    .where(User.user_type == role, User.created_at >= start)
+                ) or 0
+
+            return {
+                "new_students": await count("student"),
+                "new_wardens":  await count("warden"),
+                "new_security": await count("security"),
+                "new_admins":   await count("admin"),
+            }
+
+        today   = await period_stats(today_start)
+        week    = await period_stats(week_start)
+        month   = await period_stats(month_start)
+        overall = await period_stats(epoch)
+
+        async def active_count(role: str) -> int:
+            return await db.scalar(
+                select(func.count(User.id))
+                .where(User.user_type == role, User.is_active == True)
+            ) or 0
+
+        return {
+            "live": {
+                "active_students": await active_count("student"),
+                "active_wardens":  await active_count("warden"),
+                "active_security": await active_count("security"),
+                "active_admins":   await active_count("admin"),
+                "total_users": await db.scalar(select(func.count(User.id))) or 0,
+            },
+            "today": today,
+            "week": week,
+            "month": month,
+            "overall": overall,
+        }

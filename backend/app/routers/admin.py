@@ -148,3 +148,13 @@ async def admin_reset_password(
     return AdminResetPasswordResponse(
         message="Password reset successfully with the provided password."
     )
+
+from app.schemas.user import AdminStatsResponse
+
+@router.get(
+    "/stats",
+    response_model=AdminStatsResponse,
+    summary="Dashboard statistics — live counts + Today/Week/Month/Overall user growth"
+)
+async def get_admin_stats(db: DB, current_user: CurrentAdmin):
+    return await UserService.get_admin_stats(db)

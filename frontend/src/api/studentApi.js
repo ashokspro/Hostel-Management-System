@@ -33,6 +33,11 @@ const studentApi = {
         const res = await axiosInstance.get(`/api/student/gatepasses/${passId}`);
         return res.data;
     },
+
+    async getStats() {
+    const res = await axiosInstance.get('/api/student/gatepasses/stats');
+    return res.data;
+},
 };
 
 export default studentApi;

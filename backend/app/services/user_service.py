@@ -172,3 +172,7 @@ class UserService:
                 detail=f"Invalid user type. Must be one of: {valid_types}"
             )
         return await UserRepository.get_by_user_type(db, user_type)
+    
+    @staticmethod
+    async def get_admin_stats(db: AsyncSession) -> dict:
+        return await UserRepository.get_admin_stats(db)
