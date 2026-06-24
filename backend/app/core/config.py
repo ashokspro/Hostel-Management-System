@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: str
 
     # JWT
     SECRET_KEY: str

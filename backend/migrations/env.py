@@ -8,11 +8,22 @@ from alembic import context
 from app.core.database import Base
 from app.models.user import User
 from app.models.gatepass import GatePass
+from app.core.config import settings
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+sync_url = str(settings.DATABASE_URL).replace(
+    "postgresql+asyncpg",
+    "postgresql+psycopg2"
+)
+
+config.set_main_option(
+    "sqlalchemy.url",
+    sync_url
+)
 
 # THIS IS THE ONLY target_metadata LINE — no duplicates
 target_metadata = Base.metadata

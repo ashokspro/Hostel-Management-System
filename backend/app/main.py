@@ -20,6 +20,7 @@ from app.routers.security import router as security_router
 from app.routers.gatepass import router as gatepass_router
 
 from fastapi.staticfiles import StaticFiles
+from app.core.database import engine
 
 async def create_default_users():
     """
@@ -94,9 +95,11 @@ async def create_default_users():
             print("✅ Default admin created — ID: ADMIN001, Password: Admin@123")
         await db.commit()
 
+  
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    
     print(f"🚀 {settings.APP_NAME} is starting...")
     await create_default_users()
     yield
