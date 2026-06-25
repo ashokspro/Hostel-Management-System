@@ -111,6 +111,16 @@ app = FastAPI(
     debug=settings.DEBUG,
     lifespan=lifespan
 )
+
+@app.middleware("http")
+async def debug_request(request, call_next):
+    print(f"Method: {request.method}")
+    print(f"Origin: {request.headers.get('origin')}")
+    print(f"Access-Control-Request-Method: {request.headers.get('access-control-request-method')}")
+    print(f"Access-Control-Request-Headers: {request.headers.get('access-control-request-headers')}")
+    response = await call_next(request)
+    return response
+
 print("Loaded CORS Origins:", settings.ALLOWED_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
