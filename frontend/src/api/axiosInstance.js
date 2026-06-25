@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import tokenHelper from '../utils/tokenHelper';
-console.log("VITE_API_URL =", import.meta.env.VITE_API_URL);
+
 // Create a custom Axios instance
 // baseURL means every call uses this as the prefix
 // So axios.get('/api/student/profile') becomes
