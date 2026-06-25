@@ -9,11 +9,11 @@ import tokenHelper from '../utils/tokenHelper';
 // GET http://localhost:5173/api/student/profile
 // which Vite's proxy forwards to http://localhost:8000/api/student/profile
 const axiosInstance = axios.create({
-    baseURL: '/',
+    baseURL: import.meta.env.VITE_API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 30000, // 30 seconds — fail fast if backend is down
+    timeout: 30000,
 });
 
 

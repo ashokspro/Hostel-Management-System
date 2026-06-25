@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
     # CORS
-    ALLOWED_ORIGINS: list[AnyHttpUrl] = ["http://localhost:8000"]
+    ALLOWED_ORIGINS: list[AnyHttpUrl]
 
     #Password Reset
     RESEND_API_KEY: str
