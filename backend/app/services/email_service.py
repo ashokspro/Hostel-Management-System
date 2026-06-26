@@ -4,7 +4,7 @@ import resend
 from app.core.config import settings
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")
 
 resend.api_key = settings.RESEND_API_KEY
 

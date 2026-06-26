@@ -23,7 +23,7 @@ from app.routers.gatepass import router as gatepass_router
 from fastapi.staticfiles import StaticFiles
 from app.core.database import engine
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")
 
 async def create_default_users():
     """
@@ -102,10 +102,10 @@ async def create_default_users():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     
-    logger.info(f"🚀 {settings.APP_NAME} is starting...")
+    logger.info(f"{settings.APP_NAME} is starting...")
     await create_default_users()
     yield
-    logger.info(f"🛑 {settings.APP_NAME} is shutting down...")
+    logger.info(f"{settings.APP_NAME} is shutting down...")
 
 
 app = FastAPI(
