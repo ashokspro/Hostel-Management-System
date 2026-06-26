@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
@@ -22,6 +23,8 @@ from app.routers.gatepass import router as gatepass_router
 from fastapi.staticfiles import StaticFiles
 from app.core.database import engine
 
+logger = logging.getLogger(__name__)
+
 async def create_default_users():
     """
     Creates default warden and security accounts on startup.
@@ -42,7 +45,7 @@ async def create_default_users():
                 email="warden@hostel.com",
                 is_active=True
             ))
-            print("✅ Default warden created — ID: WARDEN001, Password: Warden@123")
+            logger.info("Default Warden account created.")
 
         # ── Default Security ──────────────────────────────
         security = await db.execute(
@@ -57,8 +60,7 @@ async def create_default_users():
                 email="security@hostel.com",
                 is_active=True
             ))
-            print("✅ Default security created — ID: SECURITY001, Password: Security@123")
-
+            logger.info("Default Security account created.")
         # ── Default Student ───────────────────────────────
         student = await db.execute(
             select(User).where(User.id == "STU001")
@@ -77,7 +79,7 @@ async def create_default_users():
                 guardian_phone="9999999999",
                 is_active=True
             ))
-            print("✅ Default student created — ID: STU001, Password: Student@123")
+            logger.info("Default Student account created.")
         
         # ── Default Admin ─────────────────────────────
         admin = await db.execute(
@@ -92,7 +94,7 @@ async def create_default_users():
                 email="admin@hostel.com",
                 is_active=True
             ))
-            print("✅ Default admin created — ID: ADMIN001, Password: Admin@123")
+            logger.info("Default admin account created.")
         await db.commit()
 
   
@@ -100,10 +102,10 @@ async def create_default_users():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     
-    print(f"🚀 {settings.APP_NAME} is starting...")
+    logger.info(f"🚀 {settings.APP_NAME} is starting...")
     await create_default_users()
     yield
-    print(f"🛑 {settings.APP_NAME} is shutting down...")
+    logger.info(f"🛑 {settings.APP_NAME} is shutting down...")
 
 
 app = FastAPI(

@@ -2,6 +2,9 @@
 
 import resend
 from app.core.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 resend.api_key = settings.RESEND_API_KEY
 
@@ -61,7 +64,7 @@ def send_password_reset_email(to_email: str, name: str, reset_link: str) -> bool
         })
         return True
     except Exception as e:
-        print(f"⚠️ Failed to send password reset email: {e}")
+        logger.exception(f"Failed to send password reset email: {e}")
         return False
 
 
@@ -102,5 +105,5 @@ def send_password_changed_notification(to_email: str, name: str) -> bool:
         })
         return True
     except Exception as e:
-        print(f"⚠️ Failed to send password-changed notification: {e}")
+        logger.exception(f"Failed to send password-changed notification: {e}")
         return False
